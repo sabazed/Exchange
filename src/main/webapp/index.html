@@ -1,0 +1,55 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Exchange</title>
+    <link rel="stylesheet" href="main.css">
+</head>
+<body>
+    <h1> Welcome to the Exchange!</h1>
+    <h2 class="titles">New order</h2>
+    <h2 class="titles">Your orders</h2>
+    <h2 class="titles">Market Data</h2>
+    <div id="overlay" style="display: none">
+        <span id="notif">An error occurred, please try again later</span>
+    </div>
+    <div class="order">
+        <form id="order-form" action="#" method="post">
+            <fieldset class="section">
+                <h3>Enter order details below:</h3>
+                <div class="input">
+                    <label for="user" class="order-text">Username:</label>
+                    <input id="user" required>
+                    <br>
+                    <label for="instrument" class="order-text">Instrument id:</label>
+                    <input id="instrument" required>
+                    <br>
+                    <label for="price" class="order-text">Price:</label>
+                    <input id="price" required>
+                    <br>
+                    <label for="qty" class="order-text">Quantity:</label>
+                    <input id="qty" required>
+                    <br>
+                    <label for="side" class="order-text">Choose buy or sell</label>
+                    <select id="side">
+                        <option>Buy</option>
+                        <option>Sell</option>
+                    </select>
+                </div>
+            </fieldset>
+            <div class="btn"><button type="submit" onclick="sendOrder()">Submit your order</button></div>
+        </form>
+    </div>
+    <div class="market-data">
+        <fieldset class="market-field" id="market-field">
+
+        </fieldset>
+    </div>
+    <div class="order-book">
+            <fieldset class="book-field" id="book-field">
+
+            </fieldset>
+    </div>
+    <script type="text/javascript" src="orders.js"></script>
+</body>
+</html>

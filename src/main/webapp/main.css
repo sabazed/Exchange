@@ -1,0 +1,153 @@
+body {
+    background: #2c2f33;
+    margin-top: 5rem;
+    color: #fafafa;
+    text-align: center;
+    font-family: "JetBrains Mono", monospace;
+}
+
+h1 {
+    padding-top: 50px;
+    padding-bottom: 100px;
+    font-size: 48px;
+    text-shadow: -5px 5px 15px #000000;
+}
+
+h2 {
+    font-size: 36px;
+}
+
+h3 {
+    font-size: 26px;
+}
+
+.titles {
+    width: 33%;
+    float: left;
+}
+
+h4 {
+    color: red;
+    font-family: "JetBrains Mono Thin", monospace;
+}
+
+button {
+    font-size: 26px;
+}
+
+select {
+    font-size: 16px;
+    padding: 5px;
+}
+
+.btn {
+    padding-top: 50px;
+}
+
+.cancel {
+    font-size: 16px;
+    background: #2c2f33;
+    border: none;
+    border-radius: 10px;
+    color: #fafafa;
+    float: right;
+    margin-top: 2%;
+}
+
+.cancel:hover {
+    color: #99aab5;
+}
+
+.entry {
+    background: #36393f;
+    border-radius: 5px;
+    text-align: start;
+    padding: 5px 10px;
+    margin: 5px;
+}
+
+.section, .book-field, .market-field {
+    border-radius: 10px;
+    border-color: #7289da;
+    text-decoration-color: #fafafa;
+    height: 300%;
+    border-width: 5px;
+    padding: 10px;
+    /*margin: 1%;*/
+}
+
+.order, .order-book, .market-data {
+    width: 30%;
+    float: left;
+    color: #ffffff;
+}
+
+.order, .order-book {
+    width: 35%;
+}
+
+.section {
+    padding: 50px;
+    line-height: 300%;
+}
+
+.book-field, .market-field {
+    height: 500px;
+    overflow-y: scroll;
+}
+
+label {
+    font-size: 18px;
+    float: left;
+}
+
+input {
+    line-height: 30px;
+    font-size: 18px;
+    float: right;
+    line-break: strict;
+}
+
+::-webkit-scrollbar {
+    width: 10px;
+}
+
+::-webkit-scrollbar-track {
+    border: 10px;
+    background: #36393f;
+}
+
+::-webkit-scrollbar-thumb {
+    background: #888;
+}
+
+::-webkit-scrollbar-thumb:hover {
+    background: #555;
+}
+
+#overlay {
+    position: fixed; /* Sit on top of the page content */
+    width: 30%; /* Full width (cover the whole page) */
+    height: 7.5%; /* Full height (cover the whole page) */
+    text-align: center;
+    vertical-align: middle;
+    border-radius: 10px;
+    top: 10px;
+    left: 10px;
+    right: 10px;
+    bottom: 10px;
+    border: 2px solid #e0b20f;
+    background-color: #1c1d1f; /* Black background with opacity */
+    z-index: 2; /* Specify a stack order in case you're using a different order for other elements */
+    cursor: pointer; /* Add a pointer on hover */
+}
+
+#notif {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    color: white;
+    transform: translate(-50%,-50%);
+    -ms-transform: translate(-50%,-50%);
+    white-space: nowrap;
+}
