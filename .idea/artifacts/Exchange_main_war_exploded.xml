@@ -1,0 +1,18 @@
+<component name="ArtifactManager">
+  <artifact type="exploded-war" build-on-make="true" name="Exchange.main:war exploded">
+    <output-path>$PROJECT_DIR$/out/artifacts/Exchange_main_war_exploded</output-path>
+    <root id="root">
+      <element id="directory" name="WEB-INF">
+        <element id="directory" name="classes">
+          <element id="module-output" name="Exchange.main" />
+        </element>
+        <element id="directory" name="lib">
+          <element id="library" level="project" name="Gradle: com.fasterxml.jackson.core:jackson-databind:2.8.8" />
+          <element id="library" level="project" name="Gradle: com.fasterxml.jackson.core:jackson-core:2.8.8" />
+          <element id="library" level="project" name="Gradle: com.fasterxml.jackson.core:jackson-annotations:2.8.8" />
+        </element>
+      </element>
+      <element id="javaee-facet-resources" facet="Exchange.main/web/Web Gradle : Exchange-1.0-SNAPSHOT.war" />
+    </root>
+  </artifact>
+</component>

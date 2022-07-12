@@ -8,40 +8,47 @@
 <body>
     <h1> Welcome to the Exchange!</h1>
     <h2 class="titles">New order</h2>
-    <h2 class="titles">Your orders</h2>
     <h2 class="titles">Market Data</h2>
-    <div id="overlay" style="display: none">
-        <span id="notif">An error occurred, please try again later</span>
+    <h2 class="titles">Your orders</h2>
+    <div class="overlay" id="notif" style="display: none" onclick="fadeElem(this.id)">
+        <span id="notiftext">An error occurred, please try again later</span>
     </div>
+<!--    <div class="overlay" id="login" style="display: block">-->
+<!--        <div id="logintext">-->
+<!--            <label for="username">Enter username:</label>-->
+<!--            <input id="username">-->
+<!--            <button type="submit" id="loginbtn" onclick="login()">LOG IN</button>-->
+<!--        </div>-->
+<!--    </div>-->
     <div class="order">
         <form id="order-form" action="#" method="post">
             <fieldset class="section">
                 <h3>Enter order details below:</h3>
                 <div class="input">
-                    <label for="user" class="order-text">Username:</label>
-                    <input id="user" required>
+                    <label for="user" class="order-text-label">Username:</label>
+                    <input id="user" class="order-text" required>
                     <br>
-                    <label for="instrument" class="order-text">Instrument id:</label>
-                    <input id="instrument" required>
+                    <label for="instrument" class="order-text-label">Instrument id:</label>
+                    <input id="instrument" class="order-text" required>
                     <br>
-                    <label for="price" class="order-text">Price:</label>
-                    <input id="price" required>
+                    <label for="price" class="order-text-label">Price:</label>
+                    <input id="price" class="order-text" required>
                     <br>
-                    <label for="qty" class="order-text">Quantity:</label>
-                    <input id="qty" required>
+                    <label for="qty" class="order-text-label">Quantity:</label>
+                    <input id="qty" class="order-text" required>
                     <br>
-                    <label for="side" class="order-text">Choose buy or sell</label>
+                    <label for="side" class="order-text-label">Choose buy or sell</label>
                     <select id="side">
-                        <option>Buy</option>
-                        <option>Sell</option>
+                        <option>BUY</option>
+                        <option>SELL</option>
                     </select>
                 </div>
             </fieldset>
-            <div class="btn"><button type="submit" onclick="sendOrder()">Submit your order</button></div>
+            <div class="btn"><button type="submit" id="subbtn" onclick="sendOrder()">SUBMIT</button></div>
         </form>
     </div>
     <div class="market-data">
-        <fieldset class="market-field" id="market-field">
+        <fieldset class="market-field" id="market-field" data->
 
         </fieldset>
     </div>

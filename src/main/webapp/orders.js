@@ -1,94 +1,141 @@
+var orders = {};
 var wsocket = new WebSocket("ws://localhost:8080/Exchange/order");
 
 wsocket.onmessage = function (evt) {
-    document.getElementById("overlay").style.display = "none";
+    document.getElementById("notif").style.display = 'none';
+    console.log(evt.data);
     let data = JSON.parse(evt.data);
-    if (data.status === "removed") {
+    if (data.status === "Cancel") {
         removeOrder(data.id);
-        removeNotif(data.id);
     }
-    else if (data.status === "trade") {
-        tradeNotif(data.sold, data.bought);
-        removeOrder(data.sold);
-        removeOrder(data.bought);
+    else if (data.status === "Trade") {
+        tradeOrder(data);
     }
-    else if (data.status === "listing") {
-        addOrder(data.user, data.order);
+    else if (data.status === "List") {
+        addOrder(data);
     }
-    else if (data.status === "fremove") {
-        removeNotif();
-    }
-    else if (data.status === "forder") {
+    else if (data.status === "Fail") {
         listError();
     }
 
 }
 
-function listNotif(id) {
-    document.getElementById("notif").innerText = `New order listed, entry ID: ${id}`;
-    document.getElementById("overlay").style.display = "block";
-    document.getElementById("overlay").style.borderColor = "#27af1d";
-    document.getElementById("overlay").style.width = "30%";
+wsocket.onopen = function (evt) {
+    for (let order in Object.values(orders)) {
+        addOrder(order);
+    }
 }
 
-function removeNotif(id) {
-    document.getElementById("notif").innerText = `Your listing removed, ID: ${id}`;
-    document.getElementById("overlay").style.display = "block";
-    document.getElementById("overlay").style.borderColor = "#27af1d";
-    document.getElementById("overlay").style.width = "30%";
-}
-
-function tradeNotif(sold, bought) {
-    document.getElementById("notif").innerText = `Orders traded! IDs: ${sold} and ${bought}`;
-    document.getElementById("overlay").style.display = "block";
-    document.getElementById("overlay").style.borderColor = "#27af1d";
-    document.getElementById("overlay").style.width = "30%";
-}
-
-function removeError() {
-    document.getElementById("notif").innerText = "An error occurred, please try again later";
-    document.getElementById("overlay").style.display = "block";
-    document.getElementById("overlay").style.borderColor = "#af1d1d";
-    document.getElementById("overlay").style.width = "30%";
-}
-
-function listError() {
-    document.getElementById("notif").innerText = "Please enter valid data";
-    document.getElementById("overlay").style.display = "block";
-    document.getElementById("overlay").style.borderColor = "#af1d1d";
-    document.getElementById("overlay").style.width = "25%";
-}
+// function login() {
+//     let user = document.getElementById("username").value;
+//     if (orders.hasOwnProperty(user.toString())) {
+//         loadOrders(user);
+//     }
+//     else {
+//         orders[user] = {};
+//     }
+//     document.getElementById("username").value = user;
+// }
+//
+// function loadOrders(user) {
+//     for (let order in orders[user]) {
+//         addOrder(order);
+//     }
+// }
 
 function sendOrder() {
     event.preventDefault();
-    let user = document.getElementById("user").value;
-    let instr = document.getElementById("instrument").value;
-    let price = document.getElementById("price").value;
-    let qty = document.getElementById("qty").value;
-    let side = document.getElementById("side").value;
-    wsocket.send(`{"status":"order", "data":{"user":"${user}", "instr":"${instr}", "price":"${price}", "qty":"${qty}", "side":"${side}"}}`);
-}
-
-function addOrder(user, data) {
-    event.preventDefault();
-    let color = data.side === "Buy" ? "green" : "red";
-    let newdiv =
-        `                <div class=\"entry\" id="${data.id}">\n` +
-        `                    <button type=\"submit\" class=\"cancel\" id=\"${user}-${data.id}" onclick="sendRemove(this.id)">x</button>\n` +
-        `                    <span style=\"color: ${color}\">${data.side} Order </span><span>- Instrument ID: ${data.instr},<br> Price: ${data.price}$, Quantity: ${data.qty}</span>\n` +
-        "                </div>";
-    document.getElementById("book-field").innerHTML += newdiv;
-    listNotif(data.id);
+    let json = {};
+    json.status = "Order";
+    json.user = document.getElementById("user").value;
+    json.instr = document.getElementById("instrument").value;
+    json.price = document.getElementById("price").value;
+    json.qty = document.getElementById("qty").value;
+    json.side = document.getElementById("side").value;
+    json.id = -1;
+    console.log(json);
+    wsocket.send(JSON.stringify(json));
 }
 
 function sendRemove(bid) {
     event.preventDefault();
     let arr = bid.split('-');
-    wsocket.send(`{"status":"remove", "user":"${arr[0]}", "id":"${arr[1]}"}`);
+    let json = orders[arr[1]];
+    console.log(json);
+    wsocket.send(JSON.stringify(json));
 }
 
+function addOrder(data) {
+    event.preventDefault();
+    orders[data.id] = data;
+    let color = data.side === "BUY" ? "green" : "red";
+    let newdiv =
+        `                <div class=\"entry\" id="${data.id}">\n` +
+        `                    <button type=\"submit\" class=\"cancel\" id=\"${data.user}-${data.id}" onclick="sendRemove(this.id)">x</button>\n` +
+        `                    <span style=\"color: ${color}\">${data.side} Order </span><span>- Instrument ID: ${data.instrument.id},<br> Price: ${data.price}$, Quantity: ${data.qty}</span>\n` +
+        "                </div>";
+    document.getElementById("book-field").innerHTML += newdiv;
+    listNotif(data.id);
+}
+
+function tradeOrder(data) {
+    event.preventDefault();
+    removeOrder(data.id);
+    if (data.qty > 0) {
+        let color = data.side === "BUY" ? "green" : "red";
+        let newdiv =
+            `                <div class=\"entry\" id="${data.id}">\n` +
+            `                    <button type=\"submit\" class=\"cancel\" id=\"${data.user}-${data.id}" onclick="sendRemove(this.id)">x</button>\n` +
+            `                    <span style=\"color: ${color}\">${data.side} Order </span><span>- Instrument ID: ${data.instrument.id},<br> Price: ${data.price}$, Quantity: ${data.qty}</span>\n` +
+            "                </div>";
+        document.getElementById("book-field").innerHTML += newdiv;
+    }
+    tradeNotif(data.id);
+}
 
 function removeOrder(bid) {
     event.preventDefault();
-    document.getElementById(bid).outerHTML = "";
+    document.getElementById(bid).remove();
+    delete orders[bid];
+    removeNotif(bid);
+}
+
+
+function listNotif(id) {
+    document.getElementById("notiftext").innerText = `New order listed, entry ID: ${id}`;
+    document.getElementById("notif").style.display = "block";
+    document.getElementById("notif").style.borderColor = "#27af1d";
+    document.getElementById("notif").style.width = "30%";
+}
+
+function removeNotif(id) {
+    document.getElementById("notiftext").innerText = `Your listing removed, ID: ${id}`;
+    document.getElementById("notif").style.display = "block";
+    document.getElementById("notif").style.borderColor = "#27af1d";
+    document.getElementById("notif").style.width = "30%";
+}
+
+function tradeNotif(id) {
+    document.getElementById("notiftext").innerText = `Your order ${id} has been traded!`;
+    document.getElementById("notif").style.display = "block";
+    document.getElementById("notif").style.borderColor = "#27af1d";
+    document.getElementById("notif").style.width = "30%";
+}
+
+// function removeError() {
+//     document.getElementById("notiftext").innerText = "An error occurred, please try again later";
+//     document.getElementById("notif").style.display = "block";
+//     document.getElementById("notif").style.borderColor = "#af1d1d";
+//     document.getElementById("notif").style.width = "30%";
+// }
+
+function listError() {
+    document.getElementById("notiftext").innerText = "Please enter valid data";
+    document.getElementById("notif").style.display = "block";
+    document.getElementById("notif").style.borderColor = "#af1d1d";
+    document.getElementById("notif").style.width = "25%";
+}
+
+function fadeElem(id) {
+    document.getElementById(id).style.opacity = 0;
 }
