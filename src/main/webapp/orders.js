@@ -2,7 +2,6 @@ var orders = {};
 var wsocket = new WebSocket("ws://localhost:8080/Exchange/order");
 
 wsocket.onmessage = function (evt) {
-    document.getElementById("notif").style.display = 'none';
     console.log(evt.data);
     let data = JSON.parse(evt.data);
     if (data.status === "Cancel") {
@@ -72,7 +71,7 @@ function addOrder(data) {
     let newdiv =
         `                <div class=\"entry\" id="${data.id}">\n` +
         `                    <button type=\"submit\" class=\"cancel\" id=\"${data.user}-${data.id}" onclick="sendRemove(this.id)">x</button>\n` +
-        `                    <span style=\"color: ${color}\">${data.side} Order </span><span>- Instrument ID: ${data.instrument.id},<br> Price: ${data.price}$, Quantity: ${data.qty}</span>\n` +
+        `                    <span style=\"color: ${color}\">${data.side} Order </span><span>- Instrument ID: ${data.instrument.id}, User: ${data.user}<br>Price: ${data.price}$, Quantity: ${data.qty}</span>\n` +
         "                </div>";
     document.getElementById("book-field").innerHTML += newdiv;
     listNotif(data.id);
@@ -104,6 +103,7 @@ function removeOrder(bid) {
 function listNotif(id) {
     document.getElementById("notiftext").innerText = `New order listed, entry ID: ${id}`;
     document.getElementById("notif").style.display = "block";
+    document.getElementById("notif").style.opacity = "1";
     document.getElementById("notif").style.borderColor = "#27af1d";
     document.getElementById("notif").style.width = "30%";
 }
@@ -111,6 +111,7 @@ function listNotif(id) {
 function removeNotif(id) {
     document.getElementById("notiftext").innerText = `Your listing removed, ID: ${id}`;
     document.getElementById("notif").style.display = "block";
+    document.getElementById("notif").style.opacity = "1";
     document.getElementById("notif").style.borderColor = "#27af1d";
     document.getElementById("notif").style.width = "30%";
 }
@@ -118,6 +119,7 @@ function removeNotif(id) {
 function tradeNotif(id) {
     document.getElementById("notiftext").innerText = `Your order ${id} has been traded!`;
     document.getElementById("notif").style.display = "block";
+    document.getElementById("notif").style.opacity = "1";
     document.getElementById("notif").style.borderColor = "#27af1d";
     document.getElementById("notif").style.width = "30%";
 }
@@ -132,10 +134,12 @@ function tradeNotif(id) {
 function listError() {
     document.getElementById("notiftext").innerText = "Please enter valid data";
     document.getElementById("notif").style.display = "block";
+    document.getElementById("notif").style.opacity = "1";
     document.getElementById("notif").style.borderColor = "#af1d1d";
     document.getElementById("notif").style.width = "25%";
 }
 
 function fadeElem(id) {
-    document.getElementById(id).style.opacity = 0;
+    var tmp = document.getElementById(id).style;
+    (function fade(){ (tmp.opacity -= 0.1) < 0 ? tmp.display = "none" : setTimeout(fade,40)})();
 }

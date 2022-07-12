@@ -1,6 +1,7 @@
 package server;
 
 import java.util.HashMap;
+import java.util.Iterator;
 import java.util.TreeSet;
 import java.util.concurrent.LinkedBlockingQueue;
 
@@ -43,8 +44,14 @@ public class MatchingEngine implements Runnable {
                         repeatMatching = false;
                         // If we have sell order we should look for buy orders with the same or greater price
                         if (order.getSide() == Side.SELL) {
-                            // After getting the order match it with an existing one
+                            // Iterate over the orders if the users are the same
                             Order matched = buyTree.ceiling(order);
+                            if (matched != null && matched.getUser().equals(order.getUser())) {
+                                Iterator<Order> iterator = buyTree.tailSet(matched, false).iterator();
+                                while (iterator.hasNext() && matched.getUser().equals(order.getUser()))
+                                    matched = iterator.next();
+                                if (matched != null && matched.getUser().equals(order.getUser())) matched = null;
+                            }
                             // If we couldn't find a match add our order to the tree
                             if (matched == null) {
                                 order.setId(ID++);
@@ -75,8 +82,10 @@ public class MatchingEngine implements Runnable {
                         // If we have sell order we should look for buy orders with the lowest price
                         else {
                             // Do everything the same way except only check the lowest sell order for matching
-                            Order matched = sellTree.isEmpty() ? null : sellTree.first();
-                            if (matched != null && (matched.getPrice() > order.getPrice() || matched.getQty() <= 0)) matched = null;
+                            Iterator<Order> iterator = sellTree.iterator();
+                            Order matched = iterator.hasNext() ? iterator.next() : null;
+                            while (iterator.hasNext() && matched.getUser().equals(order.getUser())) matched = iterator.next();
+                            if (matched != null && matched.getUser().equals(order.getUser())) matched = null;
                             if (matched == null) {
                                 order.setId(ID++);
                                 buyTree.add(order);
@@ -115,12 +124,6 @@ public class MatchingEngine implements Runnable {
     @Override
     public void run() {
         processMessages();
-    }
-
-    public static void main(String[] args) throws InterruptedException {
-        Thread matchingEngine = new Thread(new MatchingEngine());
-        matchingEngine.start();
-        matchingEngine.join();
     }
 
 }
