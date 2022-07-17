@@ -6,7 +6,7 @@ public interface Message {
 
     public boolean isValid();
 
-    public void invalidate();
+    public void setValid(boolean valid);
 
     public void addErrorCode(Status status);
 

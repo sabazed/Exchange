@@ -14,30 +14,32 @@ public class Request implements Message {
     private final Order order;
 
     @JsonCreator
-    public Request(@JsonProperty("status") Status status, @JsonProperty("order") Order order) {
+    public Request(@JsonProperty("status") Status status,
+                   @JsonProperty("valid") boolean valid,
+                   @JsonProperty("order") Order order) {
         this.status = new LinkedList<>();
-        this.status.add(status);
+        if (status != null)
+            this.status.add(status);
         this.order = order;
+        this.valid = valid;
     }
 
+    @Override
     public void addErrorCode(Status status) {
         this.status.add(status);
     }
 
-    @JsonIgnore
+    @Override
     public boolean isValid() {
         return valid;
     }
 
-    public void invalidate() {
-        this.valid = false;
-    }
-
-    @JsonIgnore
+    @Override
     public void setValid(boolean valid) {
         this.valid = valid;
     }
 
+    @Override
     public List<Status> getStatus() {
         return status;
     }
@@ -48,10 +50,12 @@ public class Request implements Message {
         this.status.add(status);
     }
 
+    @Override
     public Order getOrder() {
         return order;
     }
 
+    @Override
     public String getSession() {
         return this.order.getSession();
     }

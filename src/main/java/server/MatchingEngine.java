@@ -80,22 +80,22 @@ public class MatchingEngine implements Runnable, MessageBusService {
                         // Check all fields for errors
                         StringBuilder invalids = new StringBuilder();
                         if (order.getUser() == null || order.getUser().isBlank()) {
-                            request.invalidate();
+                            request.setValid(false);
                             request.addErrorCode(Status.InvalidUser);
                             invalids.append("username, ");
                         }
                         if (order.getInstrument() == null || order.getInstrument().getId() == null) {
-                            request.invalidate();
+                            request.setValid(false);
                             request.addErrorCode(Status.InvalidInstr);
                             invalids.append("instrument, ");
                         }
-                        if (order.getPrice() == null || order.getPrice().equals(BigDecimal.ZERO)) {
-                            request.invalidate();
+                        if (order.getPrice() == null || order.getPrice().compareTo(BigDecimal.ZERO) <= 0) {
+                            request.setValid(false);
                             request.addErrorCode(Status.InvalidPrice);
                             invalids.append("price, ");
                         }
                         if (order.getQty() <= 0) {
-                            request.invalidate();
+                            request.setValid(false);
                             request.addErrorCode(Status.InvalidQty);
                             invalids.append("qty, ");
                         }
@@ -119,12 +119,9 @@ public class MatchingEngine implements Runnable, MessageBusService {
                                 // If the users are still same we assign matched as null, or consider two cases:
                                 // Case Sell: if matched price is higher or equal else matched = null
                                 // Case Buy: if matched price is lower or equal else matched = null
-                                if (matched != null)
-                                LOG.debug("{} {}", matched, matched.getPrice().compareTo(order.getPrice()) * ((order.getSide() == Side.BUY) ? 1 : -1) > 0);
                                 if (matched != null && (matched.getUser().equals(order.getUser()) ||
                                     matched.getPrice().compareTo(order.getPrice()) * ((order.getSide() == Side.BUY) ? 1 : -1) > 0)
                                 ) matched = null;
-                                LOG.debug(matched);
                                 // If no match was found then add the order
                                 if (matched == null) {
                                     order.setGlobalId(ID++);
@@ -162,7 +159,7 @@ public class MatchingEngine implements Runnable, MessageBusService {
                                         else repeatMatching = true;
                                     }
                                     // Send trade signal for the matched order
-                                    requestBus.sendMessage(Service.Gateway, new Request(Status.Trade, matched));
+                                    requestBus.sendMessage(Service.Gateway, new Request(Status.Trade, true, matched));
                                     LOG.info("Order {} traded - {}", matched.getGlobalId(), matched);
                                 }
                             }

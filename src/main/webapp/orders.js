@@ -6,8 +6,7 @@ var wsocket = new WebSocket("ws://localhost:8080/Exchange/order");
 wsocket.onmessage = function (evt) {
     console.log(evt.data);
     let data = JSON.parse(evt.data);
-    console.log(data.status.length);
-    if (data.status.length === 1) {
+    if (data.valid) {
         if (data.status[0] === "Cancel") {
             removeOrder(data.order.clientId);
         } else if (data.status[0] === "Trade") {
@@ -72,6 +71,7 @@ function sendOrder() {
     event.preventDefault();
     let json = {};
     json.status = "List";
+    json.valid = true;
     json.order = {};
     json.order.user = document.getElementById("user").value;
     json.order.instrument = document.getElementById("instrument").value;
@@ -91,6 +91,7 @@ function sendRemove(bid) {
     let arr = bid.split('-');
     let json = {};
     json.status = "Cancel";
+    json.valid = true;
     json.order = orders[arr[1]];
     console.log(json);
     wsocket.send(JSON.stringify(json));

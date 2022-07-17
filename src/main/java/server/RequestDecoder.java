@@ -1,25 +1,33 @@
 package server;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.databind.exc.InvalidFormatException;
 import jakarta.websocket.Decoder;
 import jakarta.websocket.EndpointConfig;
 
 import java.io.IOException;
+import java.math.BigDecimal;
 
 public class RequestDecoder implements Decoder.Text<Request> {
 
     @Override
     public Request decode(String json) {
         ObjectMapper mapper = new ObjectMapper();
-        Request req = null;
+        Request req;
         try {
             req = mapper.readValue(json, Request.class);
-        } catch (NullPointerException | NumberFormatException e) {
+        } catch (InvalidFormatException e) {
+            req = new Request(null, false, new Order());
+            if (e.getTargetType() == BigDecimal.class) {
+                req.addErrorCode(Status.InvalidPrice);
+            }
+            if (e.getTargetType() == int.class) {
+                req.addErrorCode(Status.InvalidQty);
+            }
+        }
+        catch (IOException e) {
+            req = new Request(Status.Fail, false, new Order());
             e.printStackTrace();
-            req = new Request(Status.ListFail, new Order());
-        } catch (Exception e) {
-            e.printStackTrace();
-            req = new Request(Status.Fail, new Order());
         }
         return req;
     }

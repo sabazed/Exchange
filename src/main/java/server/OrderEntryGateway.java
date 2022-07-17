@@ -49,7 +49,7 @@ public class OrderEntryGateway implements MessageBusService {
     @OnMessage
     public void onMessage(Session session, Request request) {
         LOG.info("New request from session {}, data - {}", session.getId(), request);
-        if (!request.isValid() && request.getStatus().get(0) == Status.Fail || request.getStatus().get(0) == Status.ListFail) {
+        if (!request.isValid()) {
             request.getOrder().setSession(session.getId());
             requestBus.sendMessage(Service.Gateway, request);
         }
