@@ -1,66 +1,63 @@
 package server;
 
 import com.fasterxml.jackson.annotation.JsonCreator;
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonProperty;
 
-public class Request {
+import java.util.LinkedList;
+import java.util.List;
 
-    private final Status status;
-    private final String user;
-    private final Instrument instrument;
-    private final Side side;
-    private final double price;
-    private final int qty;
-    private final long id;
+public class Request implements Message {
+
+    private boolean valid = true;
+    private final List<Status> status;
+    private final Order order;
 
     @JsonCreator
-    public Request(@JsonProperty("status") Status status, @JsonProperty("user") String user, @JsonProperty("instr") Instrument instrument,
-                   @JsonProperty("side") Side side, @JsonProperty("price") double price, @JsonProperty("qty") int qty, @JsonProperty("id") long id) {
-        this.status = status;
-        this.user = user;
-        this.instrument = instrument;
-        this.side = side;
-        this.price = price;
-        this.qty = qty;
-        this.id = id;
+    public Request(@JsonProperty("status") Status status, @JsonProperty("order") Order order) {
+        this.status = new LinkedList<>();
+        this.status.add(status);
+        this.order = order;
     }
 
-    public Request(Status status) {
-        this.status = status;
-        this.user = null;
-        this.instrument = null;
-        this.side = null;
-        this.price = -1;
-        this.qty = -1;
-        this.id = -1;
+    public void addErrorCode(Status status) {
+        this.status.add(status);
     }
 
-    public Status getStatus() {
+    @JsonIgnore
+    public boolean isValid() {
+        return valid;
+    }
+
+    public void invalidate() {
+        this.valid = false;
+    }
+
+    @JsonIgnore
+    public void setValid(boolean valid) {
+        this.valid = valid;
+    }
+
+    public List<Status> getStatus() {
         return status;
     }
 
-    public String getUser() {
-        return user;
+    @Override
+    public void setStatus(Status status) {
+        this.status.clear();
+        this.status.add(status);
     }
 
-    public Instrument getInstrument() {
-        return instrument;
+    public Order getOrder() {
+        return order;
     }
 
-    public Side getSide() {
-        return side;
+    public String getSession() {
+        return this.order.getSession();
     }
 
-    public double getPrice() {
-        return price;
+    @Override
+    public String toString() {
+        return "Request[Status=" + status + ", Order=" + order + "]";
     }
-
-    public int getQty() {
-        return qty;
-    }
-
-    public long getId() {
-        return id;
-    }
-
 }

@@ -9,15 +9,17 @@ import java.io.IOException;
 public class RequestDecoder implements Decoder.Text<Request> {
 
     @Override
-    public Request decode(String s) {
+    public Request decode(String json) {
         ObjectMapper mapper = new ObjectMapper();
         Request req = null;
         try {
-            req = mapper.readValue(s, Request.class);
-        }
-        catch (Exception e) {
+            req = mapper.readValue(json, Request.class);
+        } catch (NullPointerException | NumberFormatException e) {
             e.printStackTrace();
-            req = new Request(Status.Fail);
+            req = new Request(Status.ListFail, new Order());
+        } catch (Exception e) {
+            e.printStackTrace();
+            req = new Request(Status.Fail, new Order());
         }
         return req;
     }

@@ -14,7 +14,6 @@ public class Instrument {
             this.id = Integer.valueOf(id);
         }
         catch (NumberFormatException e) {
-            System.out.println(id);
             this.id = null;
         }
     }
@@ -30,7 +29,7 @@ public class Instrument {
 
     @Override
     public boolean equals(Object o) {
-        return (o instanceof Instrument) && (id.equals(((Instrument) o).getId()));
+        return o instanceof Instrument && id != null && id.equals(((Instrument) o).getId());
     }
 
     @Override

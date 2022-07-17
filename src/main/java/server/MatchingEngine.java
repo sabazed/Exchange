@@ -1,129 +1,187 @@
 package server;
 
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
+
+import java.math.BigDecimal;
+import java.time.Instant;
 import java.util.HashMap;
 import java.util.Iterator;
 import java.util.TreeSet;
+import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.LinkedBlockingQueue;
 
-public class MatchingEngine implements Runnable {
+public class MatchingEngine implements Runnable, MessageBusService {
+
+    private final static Logger LOG = LogManager.getLogger(MatchingEngine.class);
 
     // Use a LinkedBlockingQueue to receive new orders
-    protected static final LinkedBlockingQueue<Order> neworders = new LinkedBlockingQueue<>();
+    private final BlockingQueue<Message> neworders;
     // Keep an Order Book for storing all orders
-    private static final OrderBook orderbook = new OrderBook();
+    private final HashMap<Instrument, OrderBook> orderbooks;
+    // Request bus to send responses for frontend
+    private final MessageBus requestBus;
 
     // Keep count of orders to give them unique IDs
     private static long ID = 0;
 
-    // Main method that the thread will run on
-    private static void processMessages() {
-        // Get the orders from the book
-        HashMap<Instrument, HashMap<Side, TreeSet<Order>>> orders = orderbook.getOrders();
+    public MatchingEngine(MessageBus messageBus) {
+        neworders = new LinkedBlockingQueue<>();
+        orderbooks = new HashMap<>();
+        requestBus = messageBus;
+    }
+
+    public void processMessage(Message message) {
         try {
-            // Run endlessly
-            while (true) {
+            if (message instanceof Request) neworders.put(message);
+            else { } // TODO
+        }
+        catch (InterruptedException e) {
+            // TODO
+        }
+    }
+
+    // Main method that the thread will run on
+    private void processOrders() {
+        // Run endlessly
+        while (true) {
+            try {
                 // Receive order from the queue, if it is empty - wait for it.
-                Order order = neworders.take();
+                Message request = neworders.take();
+                LOG.info("Processing new {}", request);
+                Order order = request.getOrder();
                 // Check if the instrument exists in the order book and if not, add it
-                HashMap<Side, TreeSet<Order>> instr = orders.get(order.getInstrument());
+                OrderBook instr = orderbooks.get(order.getInstrument());
                 if (instr == null) {
-                    instr = orderbook.addInstrument(order.getInstrument());
+                    orderbooks.put(order.getInstrument(), new OrderBook(order.getInstrument()));
+                    instr = orderbooks.get(order.getInstrument());
                 }
-                TreeSet<Order> sellTree = instr.get(Side.SELL);
-                TreeSet<Order> buyTree = instr.get(Side.BUY);
-                // Check if the ID != -1 (if it is not a new order, so it is a cancel order)
-                if (order.getId() != -1) {
-                    instr.get(order.getSide()).remove(order);
-                    OrderEntryGateway.send(new Request(Status.Cancel, order.getUser(), order.getInstrument(),
-                                            order.getSide(), order.getPrice(), order.getQty(), order.getId()), order.getSession());
+                // Save trees of both sides as the request's own side tree and opposite tree
+                TreeSet<Order> ownTree = order.getSide() == Side.SELL ? instr.getSellOrders() : instr.getBuyOrders();
+                TreeSet<Order> otherTree = order.getSide() == Side.SELL ? instr.getBuyOrders() : instr.getSellOrders();
+                // Check if the request has Cancel status to remove the order
+                if (request.isValid() && request.getStatus().get(0) == Status.Cancel) {
+                    // If removal couldn't be done change the status to CancelFail
+                    if (!ownTree.remove(order)) {
+                        request.setStatus(Status.CancelFail);
+                        LOG.warn("Couldn't cancel the current {}", request);
+                    }
+                    // Send the message through the Request Bus
+                    requestBus.sendMessage(Service.Gateway, request);
                 }
                 else {
-                    // Loop until all available orders are exchanged
-                    boolean repeatMatching = true;
-                    while (repeatMatching) {
-                        repeatMatching = false;
-                        // If we have sell order we should look for buy orders with the same or greater price
-                        if (order.getSide() == Side.SELL) {
-                            // Iterate over the orders if the users are the same
-                            Order matched = buyTree.ceiling(order);
-                            if (matched != null && matched.getUser().equals(order.getUser())) {
-                                Iterator<Order> iterator = buyTree.tailSet(matched, false).iterator();
+                    // Check if all data are valid and if not, skip the iteration and send the error message
+                    if (order.getSide() == null || order.getSession() == null || order.getClientId() == null || order.getClientId().isBlank()) {
+                        request.setStatus(Status.ListFail);
+                        requestBus.sendMessage(Service.Gateway, request);
+                        LOG.warn("Invalid data in {}", request);
+                    }
+                    else {
+                        // Check all fields for errors
+                        StringBuilder invalids = new StringBuilder();
+                        if (order.getUser() == null || order.getUser().isBlank()) {
+                            request.invalidate();
+                            request.addErrorCode(Status.InvalidUser);
+                            invalids.append("username, ");
+                        }
+                        if (order.getInstrument() == null || order.getInstrument().getId() == null) {
+                            request.invalidate();
+                            request.addErrorCode(Status.InvalidInstr);
+                            invalids.append("instrument, ");
+                        }
+                        if (order.getPrice() == null || order.getPrice().equals(BigDecimal.ZERO)) {
+                            request.invalidate();
+                            request.addErrorCode(Status.InvalidPrice);
+                            invalids.append("price, ");
+                        }
+                        if (order.getQty() <= 0) {
+                            request.invalidate();
+                            request.addErrorCode(Status.InvalidQty);
+                            invalids.append("qty, ");
+                        }
+                        // If any error exists then log all names and send the request, otherwise continue the loop
+                        if (!invalids.isEmpty()) {
+                            request.getStatus().remove(0); // Remove the List status
+                            requestBus.sendMessage(Service.Gateway, request);
+                            LOG.info("Invalid user input fields in {} for {}", invalids.substring(0, invalids.length() - 2), request);
+                        }
+                        else {
+                            // Loop until all available orders are exchanged
+                            boolean repeatMatching = true;
+                            while (repeatMatching) {
+                                repeatMatching = false;
+                                // Get the best deal from the tree
+                                Iterator<Order> iterator = otherTree.iterator();
+                                Order matched = iterator.hasNext() ? iterator.next() : null;
+                                // Iterate over the orders if the users are the same
                                 while (iterator.hasNext() && matched.getUser().equals(order.getUser()))
                                     matched = iterator.next();
-                                if (matched != null && matched.getUser().equals(order.getUser())) matched = null;
-                            }
-                            // If we couldn't find a match add our order to the tree
-                            if (matched == null) {
-                                order.setId(ID++);
-                                sellTree.add(order);
-                                OrderEntryGateway.send(new Request(Status.List, order.getUser(), order.getInstrument(),
-                                        order.getSide(), order.getPrice(), order.getQty(), order.getId()), order.getSession());
-                            }
-                            // Otherwise, trade it and update quantity or remove the whole order if qty is less or equal to 0
-                            else {
-                                // Calculate new quantity for the matched order, remove if 0
-                                if (matched.getQty() >= order.getQty()) {
-                                    matched.setQty(matched.getQty() - order.getQty());
-                                    if (matched.getQty() == 0) buyTree.remove(matched);
-                                    OrderEntryGateway.send(new Request(Status.Trade, order.getUser(), order.getInstrument(),
-                                            order.getSide(), order.getPrice(), order.getQty(), order.getId()), order.getSession());
-                                }
-                                // Remove matched if less than 0, update order and keep it for next iteration
-                                else {
-                                    order.setQty(order.getQty() - matched.getQty());
-                                    buyTree.remove(matched);
-                                    matched.setQty(0);
-                                    repeatMatching = true;
-                                }
-                                OrderEntryGateway.send(new Request(Status.Trade, matched.getUser(), matched.getInstrument(),
-                                        matched.getSide(), matched.getPrice(), matched.getQty(), matched.getId()), matched.getSession());
-                            }
-                        }
-                        // If we have sell order we should look for buy orders with the lowest price
-                        else {
-                            // Do everything the same way except only check the lowest sell order for matching
-                            Iterator<Order> iterator = sellTree.iterator();
-                            Order matched = iterator.hasNext() ? iterator.next() : null;
-                            while (iterator.hasNext() && matched.getUser().equals(order.getUser())) matched = iterator.next();
-                            if (matched != null && matched.getUser().equals(order.getUser())) matched = null;
-                            if (matched == null) {
-                                order.setId(ID++);
-                                buyTree.add(order);
-                                OrderEntryGateway.send(new Request(Status.List, order.getUser(), order.getInstrument(),
-                                        order.getSide(), order.getPrice(), order.getQty(), order.getId()), order.getSession());
-                            }
-                            else {
-                                if (matched.getQty() >= order.getQty()) {
-                                    matched.setQty(matched.getQty() - order.getQty());
-                                    if (matched.getQty() == 0) {
-                                        sellTree.pollFirst();
+                                // If the users are still same we assign matched as null, or consider two cases:
+                                // Case Sell: if matched price is higher or equal else matched = null
+                                // Case Buy: if matched price is lower or equal else matched = null
+                                if (matched != null)
+                                LOG.debug("{} {}", matched, matched.getPrice().compareTo(order.getPrice()) * ((order.getSide() == Side.BUY) ? 1 : -1) > 0);
+                                if (matched != null && (matched.getUser().equals(order.getUser()) ||
+                                    matched.getPrice().compareTo(order.getPrice()) * ((order.getSide() == Side.BUY) ? 1 : -1) > 0)
+                                ) matched = null;
+                                LOG.debug(matched);
+                                // If no match was found then add the order
+                                if (matched == null) {
+                                    order.setGlobalId(ID++);
+                                    order.setDateInst(Instant.now());
+                                    // If there was a problem while adding then change status flag to OrderFail and decrease ID counter
+                                    if (!ownTree.add(order)) {
+                                        request.setStatus(Status.OrderFail);
+                                        ID--;
+                                        LOG.info("Listing request unsuccessful! - {}", request);
                                     }
-                                    OrderEntryGateway.send(new Request(Status.Trade, order.getUser(), order.getInstrument(),
-                                            order.getSide(), order.getPrice(), order.getQty(), order.getId()), order.getSession());
+                                    else {
+                                        LOG.info("Listing request successful! - {}", request);
+                                    }
+                                    requestBus.sendMessage(Service.Gateway, request);
+                                } else {
+                                    // If currently matched order has more quantity then mark our request as traded
+                                    if (matched.getQty() > order.getQty()) {
+                                        matched.setQty(matched.getQty() - order.getQty());
+                                        request.setStatus(Status.Trade);
+                                        order.setGlobalId(ID++);
+                                        order.setDateInst(Instant.now());
+                                        requestBus.sendMessage(Service.Gateway, request);
+                                        LOG.info("Listing request successful after trading - {}", request);
+                                    } else {
+                                        order.setQty(order.getQty() - matched.getQty());
+                                        otherTree.pollFirst();
+                                        matched.setQty(0);
+                                        // If the order ran out of remaining qty then mark it as traded and send the message
+                                        if (order.getQty() <= 0) {
+                                            request.setStatus(Status.Trade);
+                                            requestBus.sendMessage(Service.Gateway, request);
+                                            LOG.info("Request traded successfully - {}", request);
+                                        }
+                                        // If qty is more than 0 then continue iteration
+                                        else repeatMatching = true;
+                                    }
+                                    // Send trade signal for the matched order
+                                    requestBus.sendMessage(Service.Gateway, new Request(Status.Trade, matched));
+                                    LOG.info("Order {} traded - {}", matched.getGlobalId(), matched);
                                 }
-                                else {
-                                    order.setQty(order.getQty() - matched.getQty());
-                                    sellTree.pollFirst();
-                                    matched.setQty(0);
-                                    repeatMatching = true;
-                                }
-                                OrderEntryGateway.send(new Request(Status.Trade, matched.getUser(), matched.getInstrument(),
-                                        matched.getSide(), matched.getPrice(), matched.getQty(), matched.getId()), matched.getSession());
                             }
                         }
                     }
                 }
             }
+            catch (InterruptedException e) {
+                    LOG.fatal("Matching Engine interrupted!");
+                    e.printStackTrace();
+            }
         }
-        catch (Exception e) {
-            e.printStackTrace();
-        }
-
     }
 
     @Override
     public void run() {
-        processMessages();
+        LOG.info("MatchingEngine up and running!");
+        processOrders();
+        LOG.info("MatchingEngine stopped working...");
     }
 
 }

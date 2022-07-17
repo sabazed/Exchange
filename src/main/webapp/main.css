@@ -1,9 +1,9 @@
 body {
     background: #2c2f33;
-    margin-top: 5rem;
     color: #fafafa;
     text-align: center;
     font-family: "JetBrains Mono", monospace;
+    /*overflow: scroll;*/
 }
 
 h1 {
@@ -160,6 +160,12 @@ select {
     transform: translate(-50%,-50%);
     -ms-transform: translate(-50%,-50%);
     white-space: nowrap;
+}
+
+#invalid-data {
+    margin-top: 0;
+    margin-bottom: 10%;
+    color: #d50c0c;
 }
 
 /*#login {*/
