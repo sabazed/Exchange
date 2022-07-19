@@ -1,10 +1,16 @@
+buildscript {
+    repositories {
+        gradlePluginPortal()
+    }
+    dependencies {
+        classpath 'com.bmuschko:gradle-tomcat-plugin:2.7.0'
+    }
+}
+
 plugins {
     id 'java'
     id 'war'
 }
-
-group 'com.exchange'
-version '1.0-SNAPSHOT'
 
 repositories {
     mavenCentral()
@@ -25,7 +31,6 @@ dependencies {
 
     implementation 'org.apache.logging.log4j:log4j-core:2.17.2'
     implementation 'org.apache.logging.log4j:log4j-api:2.17.2'
-    implementation 'org.apache.logging.log4j:log4j-appserver:2.17.2'
 
     compileOnly 'jakarta.servlet:jakarta.servlet-api:5.0.0'
     compileOnly 'jakarta.websocket:jakarta.websocket-api:2.0.0'
@@ -41,6 +46,19 @@ dependencies {
 
 }
 
+apply plugin: 'com.bmuschko.tomcat-base'
+apply plugin: 'com.bmuschko.tomcat'
+
+dependencies {
+    tomcat 'org.apache.tomcat.embed:tomcat-embed-core:9.0.1',
+            'org.apache.tomcat.embed:tomcat-embed-jasper:9.0.1'
+
+}
+
+tomcat {
+    httpPort = 8090
+    contextPath = 'Exchange'
+}
 
 test {
     useJUnitPlatform()

@@ -8,6 +8,11 @@ public interface Message {
 
     public void setValid(boolean valid);
 
+
+    public boolean isSent();
+
+    public void setSent(boolean sent);
+
     public void addErrorCode(Status status);
 
     public List<Status> getStatus();

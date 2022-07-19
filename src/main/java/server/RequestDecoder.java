@@ -17,7 +17,7 @@ public class RequestDecoder implements Decoder.Text<Request> {
         try {
             req = mapper.readValue(json, Request.class);
         } catch (InvalidFormatException e) {
-            req = new Request(null, false, new Order());
+            req = new Request(null, false, false, new Order());
             if (e.getTargetType() == BigDecimal.class) {
                 req.addErrorCode(Status.InvalidPrice);
             }
@@ -26,7 +26,7 @@ public class RequestDecoder implements Decoder.Text<Request> {
             }
         }
         catch (IOException e) {
-            req = new Request(Status.Fail, false, new Order());
+            req = new Request(Status.Fail, false, false, new Order());
             e.printStackTrace();
         }
         return req;

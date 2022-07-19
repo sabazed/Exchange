@@ -10,18 +10,21 @@ import java.util.List;
 public class Request implements Message {
 
     private boolean valid = true;
+    private boolean sent = true;
     private final List<Status> status;
     private final Order order;
 
     @JsonCreator
     public Request(@JsonProperty("status") Status status,
                    @JsonProperty("valid") boolean valid,
+                   @JsonProperty("sent") boolean sent,
                    @JsonProperty("order") Order order) {
         this.status = new LinkedList<>();
         if (status != null)
             this.status.add(status);
         this.order = order;
         this.valid = valid;
+        this.sent = sent;
     }
 
     @Override
@@ -58,6 +61,14 @@ public class Request implements Message {
     @Override
     public String getSession() {
         return this.order.getSession();
+    }
+
+    public boolean isSent() {
+        return sent;
+    }
+
+    public void setSent(boolean sent) {
+        this.sent = sent;
     }
 
     @Override

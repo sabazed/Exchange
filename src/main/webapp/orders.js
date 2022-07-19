@@ -72,6 +72,7 @@ function sendOrder() {
     let json = {};
     json.status = "List";
     json.valid = true;
+    json.sent = true;
     json.order = {};
     json.order.user = document.getElementById("user").value;
     json.order.instrument = document.getElementById("instrument").value;
@@ -92,6 +93,7 @@ function sendRemove(bid) {
     let json = {};
     json.status = "Cancel";
     json.valid = true;
+    json.sent = true;
     json.order = orders[arr[1]];
     console.log(json);
     wsocket.send(JSON.stringify(json));

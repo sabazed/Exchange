@@ -1,119 +1,88 @@
 package server;
 
-import jakarta.websocket.*;
-import jakarta.websocket.server.ServerEndpoint;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
-import java.io.IOException;
 import java.util.Map;
 import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.LinkedBlockingQueue;
 
-@ServerEndpoint(value = "/order", encoders = RequestEncoder.class, decoders = RequestDecoder.class)
 public class OrderEntryGateway implements MessageBusService {
 
     private static final Logger LOG = LogManager.getLogger(OrderEntryGateway.class);
 
-    private static final Map<String, OrderEntryGateway> gateways = new ConcurrentHashMap<>();
-    private static final BlockingQueue<Message> requests = new LinkedBlockingQueue<>();
-    private static MessageBus requestBus; // Can be non-static
+    private final Map<String, ExchangeEndpoint> endpoints;
+    private final BlockingQueue<Message> messages;
+    private final MessageBus requestBus;
 
-    private Session session;
+    private final Thread messageProcessor;
+    private boolean running;
 
-    private void send(Message request) {
-        LOG.info("Sending to session {} with {}", session.getId(), request);
-        try {
-            session.getBasicRemote().sendObject(request);
-        }
-        catch (EncodeException e) {
-            LOG.warn("Couldn't encode for session {} with {}", session.getId(), request);
-            e.printStackTrace();
-        }
-        catch (IOException e) {
-            LOG.warn("Couldn't send request to session {} with {}", session.getId(), request);
-        }
+    public OrderEntryGateway(MessageBus requestBus) {
 
+        endpoints = new ConcurrentHashMap<>();
+        messages = new LinkedBlockingQueue<>();
+
+        this.requestBus = requestBus;
+        requestBus.registerService(Service.Gateway, this);
+
+        messageProcessor = new Thread(this::processRequests);
+        this.running = false;
+    }
+
+    private void send(String session, Message request) {
+        LOG.info("Sending to session {} with {}", session, request);
+        endpoints.get(session).sendMessage(request);
+    }
+
+    public void addEndpoint(String sessionId, ExchangeEndpoint endpoint) {
+        this.endpoints.put(sessionId, endpoint);
+    }
+
+    public void removeEndpoint(String sessionId) {
+        this.endpoints.remove(sessionId);
     }
 
     @Override
     public void processMessage(Message request) {
         try {
-            requests.put(request);
+            messages.put(request);
         } catch (InterruptedException e) {
             e.printStackTrace();
+            // TODO
         }
     }
 
-    @OnMessage
-    public void onMessage(Session session, Request request) {
-        LOG.info("New request from session {}, data - {}", session.getId(), request);
-        if (!request.isValid()) {
-            request.getOrder().setSession(session.getId());
-            requestBus.sendMessage(Service.Gateway, request);
-        }
-        else {
-            request.getOrder().setSession(session.getId());
-            requestBus.sendMessage(Service.Engine, request);
-        }
+    public void start() {
+        running = true;
+        messageProcessor.start();
     }
 
-    @OnOpen
-    public void onOpen(Session session) {
-        LOG.info("New client connected with session {}", session.getId());
-        gateways.put(session.getId(), this);
-        this.session = session;
-        requestBus.registerService(Service.Gateway, this);
-    }
-
-    @OnClose
-    public void onClose(Session session) {
-        LOG.info("Client connected with session {}", session.getId());
-        gateways.remove(session.getId());
-        requestBus.unregisterService(Service.Gateway, this);
-    }
-
-    @OnError
-    public void onError(Session session, Throwable t) {
-        LOG.error("Caused exception at session {}", session.getId());
-        // TODO
-        t.printStackTrace();
-    }
-
-    protected Session getSession() {
-        return session;
-    }
-
-    protected static void SetRequestBus(MessageBus requestBus) {
-        OrderEntryGateway.requestBus = requestBus;
+    public void stop() {
+        running = false;
     }
 
     // Thread method for handling requests
-    private static void processRequests() {
-        while (true) {
+    private void processRequests() {
+        LOG.info("OrderEntryGateway up and running!");
+        while (running) {
             try {
-                Message request = requests.take();
-                LOG.info("Processing new {}", request);
-                gateways.get(request.getSession()).send(request);
+                Message message = messages.take();
+                LOG.info("Processing new {}", message);
+                if (message.isSent()) {
+                    message.setSent(false);
+                    requestBus.sendMessage(Service.Engine, message);
+                }
+                else send(message.getSession(), message);
             }
             catch (InterruptedException e) {
                 LOG.fatal("OrderEntryGateway interrupted!");
                 e.printStackTrace();
+                // TODO
             }
         }
-    }
-
-    protected static Thread getThread() {
-        return new Thread() {
-            @Override
-            public void run() {
-                LOG.info("OrderEntryGateway up and running!");
-                processRequests();
-                LOG.info("OrderEntryGateway stopped working...");
-
-            }
-        };
+        LOG.info("OrderEntryGateway stopped working...");
     }
 
 }

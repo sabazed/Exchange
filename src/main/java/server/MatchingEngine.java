@@ -11,7 +11,7 @@ import java.util.TreeSet;
 import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.LinkedBlockingQueue;
 
-public class MatchingEngine implements Runnable, MessageBusService {
+public class MatchingEngine implements MessageBusService {
 
     private final static Logger LOG = LogManager.getLogger(MatchingEngine.class);
 
@@ -21,30 +21,52 @@ public class MatchingEngine implements Runnable, MessageBusService {
     private final HashMap<Instrument, OrderBook> orderbooks;
     // Request bus to send responses for frontend
     private final MessageBus requestBus;
+    // Thread which will process orders
+    private final Thread orderProcessor;
+    // Marker if the engine is running or not
+    private boolean running;
 
     // Keep count of orders to give them unique IDs
     private static long ID = 0;
 
     public MatchingEngine(MessageBus messageBus) {
+
         neworders = new LinkedBlockingQueue<>();
         orderbooks = new HashMap<>();
+
         requestBus = messageBus;
+        requestBus.registerService(Service.Engine, this);
+
+
+        orderProcessor = new Thread(this::processOrders);
+        running = false;
+
     }
 
     public void processMessage(Message message) {
         try {
             if (message instanceof Request) neworders.put(message);
-            else { } // TODO
+            else {neworders.put(message); } // TODO
         }
         catch (InterruptedException e) {
             // TODO
         }
     }
 
+    public void start() {
+        running = true;
+        orderProcessor.start();
+    }
+
+    public void stop() {
+        running = false;
+    }
+
     // Main method that the thread will run on
     private void processOrders() {
+        LOG.info("MatchingEngine up and running!");
         // Run endlessly
-        while (true) {
+        while (running) {
             try {
                 // Receive order from the queue, if it is empty - wait for it.
                 Message request = neworders.take();
@@ -159,7 +181,7 @@ public class MatchingEngine implements Runnable, MessageBusService {
                                         else repeatMatching = true;
                                     }
                                     // Send trade signal for the matched order
-                                    requestBus.sendMessage(Service.Gateway, new Request(Status.Trade, true, matched));
+                                    requestBus.sendMessage(Service.Gateway, new Request(Status.Trade, true, false, matched));
                                     LOG.info("Order {} traded - {}", matched.getGlobalId(), matched);
                                 }
                             }
@@ -171,13 +193,8 @@ public class MatchingEngine implements Runnable, MessageBusService {
                     LOG.fatal("Matching Engine interrupted!");
                     e.printStackTrace();
             }
+            System.out.println("1");
         }
-    }
-
-    @Override
-    public void run() {
-        LOG.info("MatchingEngine up and running!");
-        processOrders();
         LOG.info("MatchingEngine stopped working...");
     }
 

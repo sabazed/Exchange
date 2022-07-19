@@ -3,10 +3,10 @@ package server;
 
 public interface MessageBus {
 
-    public void registerService(Service serviceType, MessageBusService service);
+    void registerService(Service serviceType, MessageBusService service);
 
-    public void unregisterService(Service serviceType, MessageBusService service);
+    void sendMessage(Service serviceType, Message message);
 
-    public void sendMessage(Service serviceType, Message message);
+    MessageBusService getService(Service serviceType);
 
 }
