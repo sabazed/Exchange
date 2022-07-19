@@ -1,6 +1,5 @@
 package server;
 
-
 public interface MessageBus {
 
     void registerService(Service serviceType, MessageBusService service);

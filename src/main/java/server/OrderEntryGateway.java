@@ -45,12 +45,14 @@ public class OrderEntryGateway implements MessageBusService {
     }
 
     @Override
-    public void processMessage(Message request) {
+    public void processMessage(Message message) {
         try {
-            messages.put(request);
+            messages.put(message);
         } catch (InterruptedException e) {
             e.printStackTrace();
-            // TODO
+            LOG.fatal("Thread interrupted, aborting...");
+            stop();
+            send(message.getSession(), new Fail(Status.FatalFail, message));
         }
     }
 
@@ -61,6 +63,9 @@ public class OrderEntryGateway implements MessageBusService {
 
     public void stop() {
         running = false;
+        for (ExchangeEndpoint endpoint : endpoints.values()) {
+            endpoint.closeEndpoint();
+        }
     }
 
     // Thread method for handling requests
@@ -78,7 +83,7 @@ public class OrderEntryGateway implements MessageBusService {
             catch (InterruptedException e) {
                 LOG.fatal("OrderEntryGateway interrupted!");
                 e.printStackTrace();
-                // TODO
+                stop();
             }
         }
         LOG.info("OrderEntryGateway stopped working...");

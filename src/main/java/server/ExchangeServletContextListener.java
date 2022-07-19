@@ -39,13 +39,8 @@ public class ExchangeServletContextListener implements ServletContextListener {
 
     @Override
     public void contextDestroyed(ServletContextEvent sce){
-        try {
-            engine.stop();
-            gateway.stop();
-        } catch (Exception e) {
-            e.printStackTrace();
-            // TODO
-        }
+        engine.stop();
+        gateway.stop();
     }
 
     public static OrderEntryGateway getGateWay() {

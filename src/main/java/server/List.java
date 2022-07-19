@@ -10,7 +10,7 @@ public class List implements Message {
     private Instrument instrument;
     private Side side;
     private BigDecimal price;
-    private int qty;
+    private BigDecimal qty;
 
     private String session;
     private Instant date;
@@ -66,7 +66,7 @@ public class List implements Message {
         return clientId;
     }
 
-    public int getQty() {
+    public BigDecimal getQty() {
         return qty;
     }
 

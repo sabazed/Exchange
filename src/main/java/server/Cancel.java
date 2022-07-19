@@ -1,7 +1,5 @@
 package server;
 
-import com.fasterxml.jackson.annotation.JsonIgnore;
-
 import java.math.BigDecimal;
 import java.time.Instant;
 

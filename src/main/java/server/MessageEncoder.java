@@ -3,7 +3,6 @@ package server;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import jakarta.websocket.Encoder;
-import jakarta.websocket.EndpointConfig;
 
 public class MessageEncoder implements Encoder.Text<Message> {
 
@@ -14,21 +13,10 @@ public class MessageEncoder implements Encoder.Text<Message> {
         try {
             json = mapper.writeValueAsString(message);
         } catch (JsonProcessingException e) {
-            e.printStackTrace(); // TODO
+            e.printStackTrace();
+            throw new EncoderException(message, e);
         }
         return json;
-    }
-
-    public MessageEncoder() {
-
-    }
-
-    @Override
-    public void init(EndpointConfig config) {
-    }
-
-    @Override
-    public void destroy() {
     }
 
 }

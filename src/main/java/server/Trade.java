@@ -8,7 +8,7 @@ public class Trade implements Message {
     private String session;
     private String clientId;
     private long globalId;
-    private int qty;
+    private BigDecimal qty;
 
     public Trade(Order order) {
         session = order.getSession();
@@ -40,7 +40,7 @@ public class Trade implements Message {
         return null;
     }
 
-    public int getQty() {
+    public BigDecimal getQty() {
         return qty;
     }
 

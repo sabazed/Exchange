@@ -48,7 +48,9 @@ public class MatchingEngine implements MessageBusService {
         }
         catch (InterruptedException e) {
             e.printStackTrace();
-            // TODO
+            LOG.fatal("Thread interrupted, aborting...");
+            stop();
+            exchangeBus.getService(Service.Gateway).stop();
         }
     }
 
@@ -59,6 +61,7 @@ public class MatchingEngine implements MessageBusService {
 
     public void stop() {
         running = false;
+        exchangeBus.getService(Service.Gateway).stop();
     }
 
     // Main method that the thread will run on
@@ -81,7 +84,7 @@ public class MatchingEngine implements MessageBusService {
                 TreeSet<Order> otherTree = message.getSide() == Side.SELL ? instr.getBuyOrders() : instr.getSellOrders();
                 // Check if the message has Cancel status to remove the order
                 if (message instanceof Cancel) {
-                    Order order = new Order(message); // TODO
+                    Order order = new Order(message);
                     // If removal couldn't be done change the status to CancelFail
                     if (!ownTree.remove(order)) {
                         message = new Fail(Status.CancelFail, message);
@@ -95,9 +98,10 @@ public class MatchingEngine implements MessageBusService {
                     Order order = (Order) message;
                     // Check if all data are valid and if not, skip the iteration and send the error message
                     if (order.getSide() == null || order.getSession() == null || order.getClientId() == null || order.getClientId().isBlank()) {
-                        message = new Fail(Status.OrderFail, message); //TODO
+                        message = new Fail(Status.FatalFail, message);
                         exchangeBus.sendMessage(Service.Gateway, message);
                         LOG.warn("Invalid data in {}", message);
+
                     }
                     else {
                         boolean invalid = false;
@@ -106,7 +110,7 @@ public class MatchingEngine implements MessageBusService {
                             message = new Fail(Status.Username, message);
                             invalid = true;
                         }
-                        else if (order.getInstrument() == null || order.getInstrument().getId() == null) {
+                        else if (order.getInstrument() == null || order.getInstrument().getName() == null || order.getInstrument().getName().isBlank()) {
                             message = new Fail(Status.Instrument, message);
                             invalid = true;
                         }
@@ -114,7 +118,7 @@ public class MatchingEngine implements MessageBusService {
                             message = new Fail(Status.Price, message);
                             invalid = true;
                         }
-                        else if (order.getQty() <= 0) {
+                        else if (order.getQty() == null || order.getQty().compareTo(BigDecimal.ZERO) <= 0) {
                             message = new Fail(Status.Quantity, message);
                             invalid = true;
                         }
@@ -158,19 +162,19 @@ public class MatchingEngine implements MessageBusService {
                                     exchangeBus.sendMessage(Service.Gateway, message);
                                 } else {
                                     // If currently matched order has more quantity then mark our message as traded
-                                    if (matched.getQty() > order.getQty()) {
-                                        matched.setQty(matched.getQty() - order.getQty());
+                                    if (matched.getQty().compareTo(order.getQty()) > 0) {
+                                        matched.setQty(matched.getQty().subtract(order.getQty()));
                                         order.setGlobalId(ID++);
                                         order.setDateInst(Instant.now());
                                         message = new Trade(order);
                                         exchangeBus.sendMessage(Service.Gateway, message);
                                         LOG.info("Listing message successful after trading - {}", message);
                                     } else {
-                                        order.setQty(order.getQty() - matched.getQty());
+                                        order.setQty(order.getQty().subtract(matched.getQty()));
                                         otherTree.pollFirst();
-                                        matched.setQty(0);
+                                        matched.setQty(BigDecimal.ZERO);
                                         // If the order ran out of remaining qty then mark it as traded and send the message
-                                        if (order.getQty() <= 0) {
+                                        if (order.getQty().compareTo(BigDecimal.ZERO) <= 0) {
                                             message = new Trade(order);
                                             exchangeBus.sendMessage(Service.Gateway, message);
                                             LOG.info("Traded successfully - {}", message);
@@ -188,9 +192,10 @@ public class MatchingEngine implements MessageBusService {
                 }
             }
             catch (InterruptedException e) {
-                    LOG.fatal("Matching Engine interrupted!");
-                    e.printStackTrace();
-                    // TODO
+                LOG.fatal("Matching Engine interrupted!");
+                e.printStackTrace();
+                stop();
+                exchangeBus.getService(Service.Gateway).stop();
             }
         }
         LOG.info("MatchingEngine stopped working...");

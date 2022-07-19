@@ -16,11 +16,11 @@ public class ExchangeBus implements MessageBus {
         services = new HashMap<>();
     }
 
-    // TODO sync
-
     @Override
     public void registerService(Service serviceType, MessageBusService service) {
-        services.put(serviceType, service);
+        synchronized (this) {
+            services.put(serviceType, service); // TODO
+        }
         LOG.info("{} registered a new {} with {}", this, serviceType, service);
     }
 

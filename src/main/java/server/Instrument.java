@@ -1,35 +1,42 @@
 package server;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
+
 import java.util.Objects;
 
 public class Instrument {
 
-    private Integer id;
+    private static int ID = 0;
 
-    public Instrument(String id) {
-        try {
-            this.id = Integer.valueOf(id);
-        }
-        catch (NumberFormatException e) {
-            this.id = null;
-        }
+    private final Integer id;
+    private String name;
+
+    public Instrument(String name) {
+        this.name = name;
+        this.id = ID++;
     }
 
     public Instrument() {
+        id = ID++;
     }
 
+    @JsonIgnore
     public Integer getId() {
         return id;
     }
 
+    public String getName() {
+        return name;
+    }
+
     @Override
     public boolean equals(Object o) {
-        return o instanceof Instrument && id != null && id.equals(((Instrument) o).getId());
+        return o instanceof Instrument && hashCode() == o.hashCode();
     }
 
     @Override
     public int hashCode() {
-        return Objects.hash(id);
+        return Objects.hash(name);
     }
 
 }

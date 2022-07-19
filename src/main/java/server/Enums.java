@@ -5,7 +5,7 @@ enum Side {
 }
 
 enum Status {
-    CancelFail, OrderFail,
+    CancelFail, OrderFail, FatalFail,
     Username, Instrument, Price, Quantity
 }
 

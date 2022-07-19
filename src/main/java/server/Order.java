@@ -5,7 +5,6 @@ import com.fasterxml.jackson.annotation.JsonIgnore;
 import java.math.BigDecimal;
 import java.time.Instant;
 import java.util.Comparator;
-import java.util.Objects;
 
 public class Order implements Message {
 
@@ -13,7 +12,7 @@ public class Order implements Message {
     private Instrument instrument;
     private Side side;
     private BigDecimal price;
-    private int qty;
+    private BigDecimal qty;
 
     private String session;
     private Instant date;
@@ -79,11 +78,11 @@ public class Order implements Message {
         return clientId;
     }
 
-    public int getQty() {
+    public BigDecimal getQty() {
         return qty;
     }
 
-    public void setQty(int qty) {
+    public void setQty(BigDecimal qty) {
         this.qty = qty;
     }
 
