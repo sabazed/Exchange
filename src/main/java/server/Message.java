@@ -1,26 +1,36 @@
 package server;
 
-import java.util.List;
+import com.fasterxml.jackson.annotation.JsonSubTypes;
+import com.fasterxml.jackson.annotation.JsonSubTypes.Type;
+import com.fasterxml.jackson.annotation.JsonTypeInfo;
 
+import java.math.BigDecimal;
+import java.time.Instant;
+
+@JsonTypeInfo(
+        use = JsonTypeInfo.Id.NAME,
+        include = JsonTypeInfo.As.PROPERTY,
+        property = "type")
+@JsonSubTypes({
+        @Type(value = Order.class, name = "Order"),
+        @Type(value = Cancel.class, name = "Cancel")
+})
 public interface Message {
 
-    public boolean isValid();
+    String getSession();
 
-    public void setValid(boolean valid);
+    void setSession(String session);
 
+    Instrument getInstrument();
 
-    public boolean isSent();
+    BigDecimal getPrice();
 
-    public void setSent(boolean sent);
+    Side getSide();
 
-    public void addErrorCode(Status status);
+    Instant getDateInst();
 
-    public List<Status> getStatus();
+    String getClientId();
 
-    public void setStatus(Status status);
-
-    public String getSession();
-
-    public Order getOrder();
+    long getGlobalId();
 
 }

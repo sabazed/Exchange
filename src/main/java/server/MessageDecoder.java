@@ -8,28 +8,28 @@ import jakarta.websocket.EndpointConfig;
 import java.io.IOException;
 import java.math.BigDecimal;
 
-public class RequestDecoder implements Decoder.Text<Request> {
+public class MessageDecoder implements Decoder.Text<Message> {
 
     @Override
-    public Request decode(String json) {
+    public Message decode(String json) {
         ObjectMapper mapper = new ObjectMapper();
-        Request req;
+        Message message = null;
         try {
-            req = mapper.readValue(json, Request.class);
-        } catch (InvalidFormatException e) {
-            req = new Request(null, false, false, new Order());
+            message = mapper.readValue(json, Message.class);
+        } catch (InvalidFormatException e) { // TODO
             if (e.getTargetType() == BigDecimal.class) {
-                req.addErrorCode(Status.InvalidPrice);
+                message = new Fail(Status.Price);
+
             }
-            if (e.getTargetType() == int.class) {
-                req.addErrorCode(Status.InvalidQty);
+            else if (e.getTargetType() == int.class) { // TODO
+                message = new Fail(Status.Quantity);
             }
         }
         catch (IOException e) {
-            req = new Request(Status.Fail, false, false, new Order());
+            message = new Fail(Status.OrderFail); // TODO
             e.printStackTrace();
         }
-        return req;
+        return message;
     }
 
     @Override
@@ -37,7 +37,8 @@ public class RequestDecoder implements Decoder.Text<Request> {
         return s != null;
     }
 
-    public RequestDecoder() { }
+    public MessageDecoder() {
+    }
 
     @Override
     public void init(EndpointConfig config) {

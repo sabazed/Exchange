@@ -14,18 +14,18 @@ public class OrderEntryGateway implements MessageBusService {
 
     private final Map<String, ExchangeEndpoint> endpoints;
     private final BlockingQueue<Message> messages;
-    private final MessageBus requestBus;
+    private final MessageBus exchangeBus;
 
     private final Thread messageProcessor;
     private boolean running;
 
-    public OrderEntryGateway(MessageBus requestBus) {
+    public OrderEntryGateway(MessageBus ExchangeBus) {
 
         endpoints = new ConcurrentHashMap<>();
         messages = new LinkedBlockingQueue<>();
 
-        this.requestBus = requestBus;
-        requestBus.registerService(Service.Gateway, this);
+        this.exchangeBus = ExchangeBus;
+        ExchangeBus.registerService(Service.Gateway, this);
 
         messageProcessor = new Thread(this::processRequests);
         this.running = false;
@@ -70,9 +70,8 @@ public class OrderEntryGateway implements MessageBusService {
             try {
                 Message message = messages.take();
                 LOG.info("Processing new {}", message);
-                if (message.isSent()) {
-                    message.setSent(false);
-                    requestBus.sendMessage(Service.Engine, message);
+                if (message instanceof Order || message instanceof Cancel) {
+                    exchangeBus.sendMessage(Service.Engine, message);
                 }
                 else send(message.getSession(), message);
             }

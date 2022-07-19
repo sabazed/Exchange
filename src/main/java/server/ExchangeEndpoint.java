@@ -7,7 +7,7 @@ import org.apache.logging.log4j.Logger;
 
 import java.io.IOException;
 
-@ServerEndpoint(value = "/order", encoders = RequestEncoder.class, decoders = RequestDecoder.class)
+@ServerEndpoint(value = "/order", encoders = MessageEncoder.class, decoders = MessageDecoder.class)
 public class ExchangeEndpoint {
 
     private static final Logger LOG = LogManager.getLogger(OrderEntryGateway.class);
@@ -28,9 +28,11 @@ public class ExchangeEndpoint {
         } catch (IOException e) {
             LOG.warn("Connection to session {} interrupted!", session);
             e.printStackTrace();
+            // TODO
         } catch (EncodeException e) {
             LOG.warn("Couldn't encode for session {} with {}", session, message);
             e.printStackTrace();
+            // TODO
         }
     }
 
@@ -43,16 +45,18 @@ public class ExchangeEndpoint {
     }
 
     @OnMessage
-    public void onMessage(Session session, Request request) {
-        LOG.info("New request from session {}, data - {}", session.getId(), request);
-        if (!request.isValid()) {
-            request.getOrder().setSession(session.getId());
-            sendMessage(request);
+    public void onMessage(Session session, Message message) {
+        if (message != null) {
+            LOG.info("New response from session {}, data - {}", session.getId(), message);
+            message.setSession(session.getId());
+            if (message instanceof Fail) {
+                sendMessage(message);
+            }
+            else {
+                gateway.processMessage(message);
+            }
         }
-        else {
-            request.getOrder().setSession(session.getId());
-            gateway.processMessage(request);
-        }
+        else {} //TODO
     }
 
     @OnClose
@@ -63,9 +67,9 @@ public class ExchangeEndpoint {
 
     @OnError
     public void onError(Session session, Throwable t) {
-        LOG.error("Caused exception at session {}", session.getId());
-        // TODO
+        LOG.error("Exception at session {}", session.getId());
         t.printStackTrace();
+        // TODO
     }
 
 }

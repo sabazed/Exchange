@@ -19,19 +19,19 @@ public class ExchangeServletContextListener implements ServletContextListener {
 
     private static MessageBusService engine;
     private static MessageBusService gateway;
-    private static MessageBus requestBus;
+    private static MessageBus exchangeBus;
 
     @Override
     public void contextInitialized(ServletContextEvent sce) {
         if (engine == null) {
-            // Initialize the Request Bus
-            LOG.info("Initializing a new Request Bus");
-            requestBus = new RequestBus();
+            // Initialize the Response Bus
+            LOG.info("Initializing a new Exchange Bus");
+            exchangeBus = new ExchangeBus();
             // Create both service instances
             LOG.info("Initializing a new Matching Engine");
-            engine = new MatchingEngine(requestBus);
+            engine = new MatchingEngine(exchangeBus);
             LOG.info("Initializing a new Order Entry Gateway");
-            gateway = new OrderEntryGateway(requestBus);
+            gateway = new OrderEntryGateway(exchangeBus);
             engine.start();
             gateway.start();
         }
@@ -49,7 +49,7 @@ public class ExchangeServletContextListener implements ServletContextListener {
     }
 
     public static OrderEntryGateway getGateWay() {
-        return (OrderEntryGateway) requestBus.getService(Service.Gateway);
+        return (OrderEntryGateway) exchangeBus.getService(Service.Gateway);
     }
 
 }

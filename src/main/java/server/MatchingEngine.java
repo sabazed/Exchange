@@ -16,11 +16,11 @@ public class MatchingEngine implements MessageBusService {
     private final static Logger LOG = LogManager.getLogger(MatchingEngine.class);
 
     // Use a LinkedBlockingQueue to receive new orders
-    private final BlockingQueue<Message> neworders;
+    private final BlockingQueue<Message> newOrders;
     // Keep an Order Book for storing all orders
-    private final HashMap<Instrument, OrderBook> orderbooks;
-    // Request bus to send responses for frontend
-    private final MessageBus requestBus;
+    private final HashMap<Instrument, OrderBook> orderBooks;
+    // Response bus to send responses for frontend
+    private final MessageBus exchangeBus;
     // Thread which will process orders
     private final Thread orderProcessor;
     // Marker if the engine is running or not
@@ -31,12 +31,11 @@ public class MatchingEngine implements MessageBusService {
 
     public MatchingEngine(MessageBus messageBus) {
 
-        neworders = new LinkedBlockingQueue<>();
-        orderbooks = new HashMap<>();
+        newOrders = new LinkedBlockingQueue<>();
+        orderBooks = new HashMap<>();
 
-        requestBus = messageBus;
-        requestBus.registerService(Service.Engine, this);
-
+        exchangeBus = messageBus;
+        exchangeBus.registerService(Service.Engine, this);
 
         orderProcessor = new Thread(this::processOrders);
         running = false;
@@ -45,10 +44,10 @@ public class MatchingEngine implements MessageBusService {
 
     public void processMessage(Message message) {
         try {
-            if (message instanceof Request) neworders.put(message);
-            else {neworders.put(message); } // TODO
+            newOrders.put(message);
         }
         catch (InterruptedException e) {
+            e.printStackTrace();
             // TODO
         }
     }
@@ -69,63 +68,60 @@ public class MatchingEngine implements MessageBusService {
         while (running) {
             try {
                 // Receive order from the queue, if it is empty - wait for it.
-                Message request = neworders.take();
-                LOG.info("Processing new {}", request);
-                Order order = request.getOrder();
+                Message message = newOrders.take();
+                LOG.info("Processing new {}", message);
                 // Check if the instrument exists in the order book and if not, add it
-                OrderBook instr = orderbooks.get(order.getInstrument());
+                OrderBook instr = orderBooks.get(message.getInstrument());
                 if (instr == null) {
-                    orderbooks.put(order.getInstrument(), new OrderBook(order.getInstrument()));
-                    instr = orderbooks.get(order.getInstrument());
+                    orderBooks.put(message.getInstrument(), new OrderBook(message.getInstrument()));
+                    instr = orderBooks.get(message.getInstrument());
                 }
-                // Save trees of both sides as the request's own side tree and opposite tree
-                TreeSet<Order> ownTree = order.getSide() == Side.SELL ? instr.getSellOrders() : instr.getBuyOrders();
-                TreeSet<Order> otherTree = order.getSide() == Side.SELL ? instr.getBuyOrders() : instr.getSellOrders();
-                // Check if the request has Cancel status to remove the order
-                if (request.isValid() && request.getStatus().get(0) == Status.Cancel) {
+                // Save trees of both sides as the message's own side tree and opposite tree
+                TreeSet<Order> ownTree = message.getSide() == Side.SELL ? instr.getSellOrders() : instr.getBuyOrders();
+                TreeSet<Order> otherTree = message.getSide() == Side.SELL ? instr.getBuyOrders() : instr.getSellOrders();
+                // Check if the message has Cancel status to remove the order
+                if (message instanceof Cancel) {
+                    Order order = new Order(message); // TODO
                     // If removal couldn't be done change the status to CancelFail
                     if (!ownTree.remove(order)) {
-                        request.setStatus(Status.CancelFail);
-                        LOG.warn("Couldn't cancel the current {}", request);
+                        message = new Fail(Status.CancelFail, message);
+                        LOG.warn("Couldn't cancel current {}", message);
                     }
-                    // Send the message through the Request Bus
-                    requestBus.sendMessage(Service.Gateway, request);
+                    else message = new Remove(message);
+                    // Send the message through the Response Bus
+                    exchangeBus.sendMessage(Service.Gateway, message);
                 }
                 else {
+                    Order order = (Order) message;
                     // Check if all data are valid and if not, skip the iteration and send the error message
                     if (order.getSide() == null || order.getSession() == null || order.getClientId() == null || order.getClientId().isBlank()) {
-                        request.setStatus(Status.ListFail);
-                        requestBus.sendMessage(Service.Gateway, request);
-                        LOG.warn("Invalid data in {}", request);
+                        message = new Fail(Status.OrderFail, message); //TODO
+                        exchangeBus.sendMessage(Service.Gateway, message);
+                        LOG.warn("Invalid data in {}", message);
                     }
                     else {
+                        boolean invalid = false;
                         // Check all fields for errors
-                        StringBuilder invalids = new StringBuilder();
                         if (order.getUser() == null || order.getUser().isBlank()) {
-                            request.setValid(false);
-                            request.addErrorCode(Status.InvalidUser);
-                            invalids.append("username, ");
+                            message = new Fail(Status.Username, message);
+                            invalid = true;
                         }
-                        if (order.getInstrument() == null || order.getInstrument().getId() == null) {
-                            request.setValid(false);
-                            request.addErrorCode(Status.InvalidInstr);
-                            invalids.append("instrument, ");
+                        else if (order.getInstrument() == null || order.getInstrument().getId() == null) {
+                            message = new Fail(Status.Instrument, message);
+                            invalid = true;
                         }
-                        if (order.getPrice() == null || order.getPrice().compareTo(BigDecimal.ZERO) <= 0) {
-                            request.setValid(false);
-                            request.addErrorCode(Status.InvalidPrice);
-                            invalids.append("price, ");
+                        else if (order.getPrice() == null || order.getPrice().compareTo(BigDecimal.ZERO) <= 0) {
+                            message = new Fail(Status.Price, message);
+                            invalid = true;
                         }
-                        if (order.getQty() <= 0) {
-                            request.setValid(false);
-                            request.addErrorCode(Status.InvalidQty);
-                            invalids.append("qty, ");
+                        else if (order.getQty() <= 0) {
+                            message = new Fail(Status.Quantity, message);
+                            invalid = true;
                         }
-                        // If any error exists then log all names and send the request, otherwise continue the loop
-                        if (!invalids.isEmpty()) {
-                            request.getStatus().remove(0); // Remove the List status
-                            requestBus.sendMessage(Service.Gateway, request);
-                            LOG.info("Invalid user input fields in {} for {}", invalids.substring(0, invalids.length() - 2), request);
+                        // If any error exists then log the field and send the message, otherwise continue the loop
+                        if (invalid) {
+                            exchangeBus.sendMessage(Service.Gateway, message);
+                            LOG.info("Invalid user input field in {}", message);
                         }
                         else {
                             // Loop until all available orders are exchanged
@@ -150,38 +146,40 @@ public class MatchingEngine implements MessageBusService {
                                     order.setDateInst(Instant.now());
                                     // If there was a problem while adding then change status flag to OrderFail and decrease ID counter
                                     if (!ownTree.add(order)) {
-                                        request.setStatus(Status.OrderFail);
+                                        message = new Fail(Status.OrderFail, message);
                                         ID--;
-                                        LOG.info("Listing request unsuccessful! - {}", request);
+                                        LOG.warn("Listing message unsuccessful! - {}", message);
+                                        // TODO
                                     }
                                     else {
-                                        LOG.info("Listing request successful! - {}", request);
+                                        message = new List(order);
+                                        LOG.info("Listing message successful! - {}", message);
                                     }
-                                    requestBus.sendMessage(Service.Gateway, request);
+                                    exchangeBus.sendMessage(Service.Gateway, message);
                                 } else {
-                                    // If currently matched order has more quantity then mark our request as traded
+                                    // If currently matched order has more quantity then mark our message as traded
                                     if (matched.getQty() > order.getQty()) {
                                         matched.setQty(matched.getQty() - order.getQty());
-                                        request.setStatus(Status.Trade);
                                         order.setGlobalId(ID++);
                                         order.setDateInst(Instant.now());
-                                        requestBus.sendMessage(Service.Gateway, request);
-                                        LOG.info("Listing request successful after trading - {}", request);
+                                        message = new Trade(order);
+                                        exchangeBus.sendMessage(Service.Gateway, message);
+                                        LOG.info("Listing message successful after trading - {}", message);
                                     } else {
                                         order.setQty(order.getQty() - matched.getQty());
                                         otherTree.pollFirst();
                                         matched.setQty(0);
                                         // If the order ran out of remaining qty then mark it as traded and send the message
                                         if (order.getQty() <= 0) {
-                                            request.setStatus(Status.Trade);
-                                            requestBus.sendMessage(Service.Gateway, request);
-                                            LOG.info("Request traded successfully - {}", request);
+                                            message = new Trade(order);
+                                            exchangeBus.sendMessage(Service.Gateway, message);
+                                            LOG.info("Traded successfully - {}", message);
                                         }
                                         // If qty is more than 0 then continue iteration
                                         else repeatMatching = true;
                                     }
                                     // Send trade signal for the matched order
-                                    requestBus.sendMessage(Service.Gateway, new Request(Status.Trade, true, false, matched));
+                                    exchangeBus.sendMessage(Service.Gateway, new Trade(matched));
                                     LOG.info("Order {} traded - {}", matched.getGlobalId(), matched);
                                 }
                             }
@@ -192,8 +190,8 @@ public class MatchingEngine implements MessageBusService {
             catch (InterruptedException e) {
                     LOG.fatal("Matching Engine interrupted!");
                     e.printStackTrace();
+                    // TODO
             }
-            System.out.println("1");
         }
         LOG.info("MatchingEngine stopped working...");
     }

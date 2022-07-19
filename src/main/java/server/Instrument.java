@@ -1,8 +1,5 @@
 package server;
 
-import com.fasterxml.jackson.annotation.JsonCreator;
-import com.fasterxml.jackson.annotation.JsonProperty;
-
 import java.util.Objects;
 
 public class Instrument {
@@ -18,9 +15,7 @@ public class Instrument {
         }
     }
 
-    @JsonCreator
-    public Instrument(@JsonProperty("id") int id) {
-        this.id = id;
+    public Instrument() {
     }
 
     public Integer getId() {

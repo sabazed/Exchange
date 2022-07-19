@@ -5,9 +5,8 @@ enum Side {
 }
 
 enum Status {
-    Cancel, Trade, List,
-    Fail, CancelFail, OrderFail, ListFail,
-    InvalidUser, InvalidInstr, InvalidPrice, InvalidQty
+    CancelFail, OrderFail,
+    Username, Instrument, Price, Quantity
 }
 
 enum Service {

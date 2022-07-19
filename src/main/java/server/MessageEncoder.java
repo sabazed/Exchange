@@ -5,21 +5,23 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import jakarta.websocket.Encoder;
 import jakarta.websocket.EndpointConfig;
 
-public class RequestEncoder implements Encoder.Text<Request> {
+public class MessageEncoder implements Encoder.Text<Message> {
 
     @Override
-    public String encode(Request req) {
+    public String encode(Message message) {
         ObjectMapper mapper = new ObjectMapper();
         String json = "";
         try {
-            json = mapper.writeValueAsString(req);
+            json = mapper.writeValueAsString(message);
         } catch (JsonProcessingException e) {
-            e.printStackTrace();
+            e.printStackTrace(); // TODO
         }
         return json;
     }
 
-    public RequestEncoder() { }
+    public MessageEncoder() {
+
+    }
 
     @Override
     public void init(EndpointConfig config) {

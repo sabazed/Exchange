@@ -5,27 +5,32 @@ import com.fasterxml.jackson.annotation.JsonIgnore;
 import java.math.BigDecimal;
 import java.time.Instant;
 import java.util.Comparator;
+import java.util.Objects;
 
-public class Order {
+public class Order implements Message {
 
-    private final String user;
-    private final Instrument instrument;
-    private final Side side;
-    private final BigDecimal price;
-    private final String clientId;
+    private String user;
+    private Instrument instrument;
+    private Side side;
+    private BigDecimal price;
+    private int qty;
 
     private String session;
-    private int qty;
     private Instant date;
+
+    private String clientId;
     private long globalId;
 
-    // Constructor for failed orders
+    // Constructor for Cancel to compare
+    public Order(Message cancel) {
+        this.instrument = cancel.getInstrument();
+        this.side = cancel.getSide();
+        this.session = cancel.getSession();
+        this.clientId = cancel.getClientId();
+        this.globalId = cancel.getGlobalId();
+    }
+
     public Order() {
-        this.user = null;
-        this.instrument = null;
-        this.side = null;
-        this.price = null;
-        this.clientId = null;
     }
 
     public String getUser() {
@@ -56,13 +61,13 @@ public class Order {
         return date != null ? date.toString() : null;
     }
 
+    public void setDate(String date) {
+        this.date = Instant.parse(date);
+    }
+
     @JsonIgnore
     public Instant getDateInst() {
         return date;
-    }
-
-    public void setDate(String date) {
-        this.date = Instant.parse(date);
     }
 
     @JsonIgnore
@@ -92,7 +97,7 @@ public class Order {
 
     @Override
     public String toString() {
-        return "{user='" + user + '\'' +
+        return "Order{user='" + user + '\'' +
                 ", instrument=" + instrument.getId() +
                 ", side=" + side +
                 ", price=" + price +
@@ -115,10 +120,12 @@ class OrderComparator implements Comparator<Order> {
 
     @Override
     public int compare(Order o1, Order o2) {
+        if (o1.getPrice() == null) return Long.compare(o1.getGlobalId(), o2.getGlobalId());
         // Comparison priority: price - date - id
         int temp = o1.getPrice().compareTo(o2.getPrice());
         if (temp == 0) {
-            if (!o1.getDateInst().equals(o2.getDateInst())) return o1.getDateInst().isBefore(o2.getDateInst()) ? -1 : 1;
+            if (!o1.getDateInst().equals(o2.getDateInst()))
+                return o1.getDateInst().isBefore(o2.getDateInst()) ? -1 : 1;
             else return Long.compare(o1.getGlobalId(), o2.getGlobalId());
         }
         return temp * reversed;
