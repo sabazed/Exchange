@@ -4,9 +4,8 @@ import com.fasterxml.jackson.annotation.JsonIgnore;
 
 import java.math.BigDecimal;
 import java.time.Instant;
-import java.util.Comparator;
 
-public class Order implements Message {
+public class Order implements Message, Comparable<Order>  {
 
     private String user;
     private Instrument instrument;
@@ -19,18 +18,6 @@ public class Order implements Message {
 
     private String clientId;
     private long globalId;
-
-    // Constructor for Cancel to compare
-    public Order(Message cancel) {
-        this.instrument = cancel.getInstrument();
-        this.side = cancel.getSide();
-        this.session = cancel.getSession();
-        this.clientId = cancel.getClientId();
-        this.globalId = cancel.getGlobalId();
-    }
-
-    public Order() {
-    }
 
     public String getUser() {
         return user;
@@ -107,27 +94,16 @@ public class Order implements Message {
                 ", globalId=" + globalId +
                 '}';
     }
-}
-
-class OrderComparator implements Comparator<Order> {
-
-    private final int reversed;
-
-    public OrderComparator(boolean reverse) {
-        this.reversed = reverse ? -1 : 1;
-    }
 
     @Override
-    public int compare(Order o1, Order o2) {
-        if (o1.getPrice() == null) return Long.compare(o1.getGlobalId(), o2.getGlobalId());
-        // Comparison priority: price - date - id
-        int temp = o1.getPrice().compareTo(o2.getPrice());
+    public int compareTo(Order o) {
+        int temp = getPrice().compareTo(o.getPrice());
         if (temp == 0) {
-            if (!o1.getDateInst().equals(o2.getDateInst()))
-                return o1.getDateInst().isBefore(o2.getDateInst()) ? -1 : 1;
-            else return Long.compare(o1.getGlobalId(), o2.getGlobalId());
+            if (!getDateInst().equals(o.getDateInst()))
+                return getDateInst().isBefore(o.getDateInst()) ? -1 : 1;
+            else return Long.compare(getGlobalId(), o.getGlobalId());
         }
-        return temp * reversed;
+        return temp * side.getVal();
     }
 
 }

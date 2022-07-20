@@ -1,8 +1,5 @@
 package server;
 
-import java.math.BigDecimal;
-import java.time.Instant;
-
 public class Fail implements Message {
 
     private String session;
@@ -21,9 +18,6 @@ public class Fail implements Message {
         this.status = status;
     }
 
-    public Fail() {
-    }
-
     @Override
     public String getSession() {
         return session;
@@ -34,26 +28,11 @@ public class Fail implements Message {
         this.session = session;
     }
 
-    @Override
-    public Instrument getInstrument() {
-        return null;
+    public Status getStatus() {
+        return status;
     }
 
     @Override
-    public BigDecimal getPrice() {
-        return null;
-    }
-
-    @Override
-    public Side getSide() {
-        return null;
-    }
-
-    @Override
-    public Instant getDateInst() {
-        return null;
-    }
-
     public String getClientId() {
         return clientId;
     }
@@ -61,10 +40,6 @@ public class Fail implements Message {
     @Override
     public long getGlobalId() {
         return globalId;
-    }
-
-    public Status getStatus() {
-        return status;
     }
 
     @Override

@@ -2,19 +2,6 @@ var orders = {};
 var cid = 0;
 var wsocket = new WebSocket("ws://localhost:8080/Exchange/order");
 
-var notifStyle =
-    `
-    border: 2px solid #27af1d;
-    display: block;
-    opacity: 1;
-    `;
-var errorStyle =
-    `
-    border: 2px solid #af1d1d;
-    display: block;
-    opacity: 1;
-    `;
-
 wsocket.onmessage = function (evt) {
     console.log(evt.data);
     let data = JSON.parse(evt.data);
@@ -33,9 +20,6 @@ wsocket.onmessage = function (evt) {
         }
         else if (data.status === "CancelFail") {
             cancelError(data);
-        }
-        else if (data.status === "FatalFail") {
-            fatalError(data);
         }
         else {
             showError(data.status);
@@ -134,33 +118,32 @@ function removeOrder(bid) {
 
 function listNotif(id) {
     document.getElementById("notiftext").innerText = `New order listed, entry ID: ${id}`;
-    document.getElementById("notif").style.cssText = notifStyle;
+    document.getElementById("overlay").className = "notif";
+    document.getElementById("overlay").classList.remove("invisible");
 }
 
 function removeNotif(id) {
     document.getElementById("notiftext").innerText = `Your listing removed, ID: ${id}`;
-    document.getElementById("notif").style.cssText = notifStyle;
+    document.getElementById("overlay").className = "notif";
+    document.getElementById("overlay").classList.remove("invisible");
 }
 
 function tradeNotif(id) {
     document.getElementById("notiftext").innerText = `Your order ${id} has been traded!`;
-    document.getElementById("notif").style.cssText = notifStyle;
+    document.getElementById("overlay").className = "notif";
+    document.getElementById("overlay").classList.remove("invisible");
 }
 
 function cancelError(order) {
     document.getElementById("notiftext").innerText = `There was a problem canceling your order: ${order.clientId}`;
-    document.getElementById("notif").style.cssText = errorStyle;
+    document.getElementById("overlay").className = "error";
+    document.getElementById("overlay").classList.remove("invisible");
 }
 
-function orderError(order) {
+function orderError() {
     document.getElementById("notiftext").innerText = `There was a problem sending your order!`;
-    document.getElementById("notif").style.cssText = errorStyle;
-}
-
-function fatalError(order) {
-    wsocket.close();
-    document.getElementById("notiftext").innerText = `Error occurred, closing connection!`;
-    document.getElementById("notif").style.cssText = errorStyle;
+    document.getElementById("overlay").className = "error";
+    document.getElementById("overlay").classList.remove("invisible");
 }
 
 function showError(error) {
@@ -169,6 +152,5 @@ function showError(error) {
 }
 
 function fadeElem(id) {
-    var tmp = document.getElementById(id).style;
-    (function fade(){ (tmp.opacity -= 0.1) < 0 ? tmp.display = "none" : setTimeout(fade,40)})();
+    document.getElementById(id).classList.add("invisible");
 }

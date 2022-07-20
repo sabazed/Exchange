@@ -1,7 +1,6 @@
 package server;
 
 import java.math.BigDecimal;
-import java.time.Instant;
 
 public class Trade implements Message {
 
@@ -17,9 +16,6 @@ public class Trade implements Message {
         clientId = order.getClientId();
     }
 
-    public Trade() {
-    }
-
     @Override
     public String getSession() {
         return session;
@@ -30,30 +26,11 @@ public class Trade implements Message {
         this.session = session;
     }
 
-    @Override
-    public Instrument getInstrument() {
-        return null;
-    }
-
-    @Override
-    public BigDecimal getPrice() {
-        return null;
-    }
-
     public BigDecimal getQty() {
         return qty;
     }
 
     @Override
-    public Side getSide() {
-        return null;
-    }
-
-    @Override
-    public Instant getDateInst() {
-        return null;
-    }
-
     public String getClientId() {
         return clientId;
     }

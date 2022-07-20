@@ -1,18 +1,12 @@
 package server;
 
-import java.math.BigDecimal;
-import java.time.Instant;
-
-public class Cancel implements Message {
+public class Cancel implements Message, Comparable<Order> {
 
     private String session;
     private Instrument instrument;
     private Side side;
     private String clientId;
     private long globalId;
-
-    public Cancel() {
-    }
 
     @Override
     public String getSession() {
@@ -28,21 +22,11 @@ public class Cancel implements Message {
         return instrument;
     }
 
-    @Override
-    public BigDecimal getPrice() {
-        return null;
-    }
-
-    @Override
     public Side getSide() {
         return side;
     }
 
     @Override
-    public Instant getDateInst() {
-        return null;
-    }
-
     public String getClientId() {
         return clientId;
     }
@@ -61,5 +45,10 @@ public class Cancel implements Message {
                 ", clientId='" + clientId + '\'' +
                 ", globalId=" + globalId +
                 '}';
+    }
+
+    @Override
+    public int compareTo(Order o) {
+        return Long.compare(globalId, o.getGlobalId());
     }
 }

@@ -135,7 +135,17 @@ select {
     background: #555;
 }
 
-.overlay {
+#notiftext {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    color: white;
+    transform: translate(-50%,-50%);
+    -ms-transform: translate(-50%,-50%);
+    white-space: nowrap;
+}
+
+#overlay {
     position: fixed;
     width: 30%;
     height: 7.5%;
@@ -146,20 +156,33 @@ select {
     left: 1%;
     right: 1%;
     bottom: 1%;
-    border: 2px solid #e0b20f;
     background-color: #1c1d1f;
     z-index: 2;
     cursor: pointer;
 }
 
-#notiftext {
-    position: absolute;
-    top: 50%;
-    left: 50%;
-    color: white;
-    transform: translate(-50%,-50%);
-    -ms-transform: translate(-50%,-50%);
-    white-space: nowrap;
+.notif {
+    border: 2px solid #27af1d;
+    display: block;
+    opacity: 1;
+    transition: opacity 0s ease;
+}
+
+.notif.invisible {
+    opacity: 0;
+    transition: opacity 1s ease;
+}
+
+.error {
+    border: 2px solid #af1d1d;
+    display: block;
+    opacity: 1;
+    transition: opacity 0s ease;
+}
+
+.error.invisible {
+    opacity: 0;
+    transition: opacity 1s ease;
 }
 
 #invalid-data {

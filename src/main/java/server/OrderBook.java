@@ -11,8 +11,8 @@ public class OrderBook {
 
     public OrderBook(Instrument instrument) {
         this.instrument = instrument;
-        buyOrders = new TreeSet<>(new OrderComparator(true));
-        sellOrders = new TreeSet<>(new OrderComparator(false));
+        buyOrders = new TreeSet<>();
+        sellOrders = new TreeSet<>();
     }
 
     public Instrument getInstrument() {

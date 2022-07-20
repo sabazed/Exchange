@@ -30,9 +30,6 @@ public class List implements Message {
         this.globalId = order.getGlobalId();
     }
 
-    public List() {
-    }
-
     public String getUser() {
         return user;
     }

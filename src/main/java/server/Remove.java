@@ -1,8 +1,5 @@
 package server;
 
-import java.math.BigDecimal;
-import java.time.Instant;
-
 public class Remove implements Message {
 
     private String session;
@@ -11,15 +8,12 @@ public class Remove implements Message {
     private String clientId;
     private long globalId;
 
-    public Remove(Message cancel) {
+    public Remove(Cancel cancel) {
         session = cancel.getSession();
         instrument = cancel.getInstrument();
         side = cancel.getSide();
         clientId = cancel.getClientId();
         globalId = cancel.getGlobalId();
-    }
-
-    public Remove() {
     }
 
     @Override
@@ -36,21 +30,11 @@ public class Remove implements Message {
         return instrument;
     }
 
-    @Override
-    public BigDecimal getPrice() {
-        return null;
-    }
-
-    @Override
     public Side getSide() {
         return side;
     }
 
     @Override
-    public Instant getDateInst() {
-        return null;
-    }
-
     public String getClientId() {
         return clientId;
     }

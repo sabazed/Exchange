@@ -17,13 +17,18 @@ public class ExchangeServletContextListener implements ServletContextListener {
         Configurator.setLevel(LogManager.getRootLogger(), Level.ALL);
     }
 
-    private static MessageBusService engine;
-    private static MessageBusService gateway;
+    private static MatchingEngine engine;
+    private static OrderEntryGateway gateway;
     private static MessageBus exchangeBus;
 
     @Override
     public void contextInitialized(ServletContextEvent sce) {
-        if (engine == null) {
+
+        // Add current listener object to Servlet Context attributes
+        sce.getServletContext().setAttribute(getClass().getName(), this);
+
+        // Initialize both services and bus if they are not
+        if (engine == null || gateway == null || exchangeBus == null) {
             // Initialize the Response Bus
             LOG.info("Initializing a new Exchange Bus");
             exchangeBus = new ExchangeBus();
@@ -32,9 +37,14 @@ public class ExchangeServletContextListener implements ServletContextListener {
             engine = new MatchingEngine(exchangeBus);
             LOG.info("Initializing a new Order Entry Gateway");
             gateway = new OrderEntryGateway(exchangeBus);
+            // Register both instances
+            exchangeBus.registerService(MatchingEngine.class.getName(), engine);
+            exchangeBus.registerService(OrderEntryGateway.class.getName(), gateway);
+            // Start the services
             engine.start();
             gateway.start();
         }
+
     }
 
     @Override
@@ -43,8 +53,8 @@ public class ExchangeServletContextListener implements ServletContextListener {
         gateway.stop();
     }
 
-    public static OrderEntryGateway getGateWay() {
-        return (OrderEntryGateway) exchangeBus.getService(Service.Gateway);
+    public MessageBus getExchangeBus() {
+        return exchangeBus;
     }
 
 }

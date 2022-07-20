@@ -3,45 +3,24 @@ package server;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
-import java.util.Map;
 import java.util.concurrent.BlockingQueue;
-import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.LinkedBlockingQueue;
 
 public class OrderEntryGateway implements MessageBusService {
 
     private static final Logger LOG = LogManager.getLogger(OrderEntryGateway.class);
 
-    private final Map<String, ExchangeEndpoint> endpoints;
     private final BlockingQueue<Message> messages;
     private final MessageBus exchangeBus;
 
     private final Thread messageProcessor;
-    private boolean running;
+    private volatile boolean running;
 
-    public OrderEntryGateway(MessageBus ExchangeBus) {
-
-        endpoints = new ConcurrentHashMap<>();
+    public OrderEntryGateway(MessageBus messageBus) {
         messages = new LinkedBlockingQueue<>();
-
-        this.exchangeBus = ExchangeBus;
-        ExchangeBus.registerService(Service.Gateway, this);
-
-        messageProcessor = new Thread(this::processRequests);
-        this.running = false;
-    }
-
-    private void send(String session, Message request) {
-        LOG.info("Sending to session {} with {}", session, request);
-        endpoints.get(session).sendMessage(request);
-    }
-
-    public void addEndpoint(String sessionId, ExchangeEndpoint endpoint) {
-        this.endpoints.put(sessionId, endpoint);
-    }
-
-    public void removeEndpoint(String sessionId) {
-        this.endpoints.remove(sessionId);
+        exchangeBus = messageBus;
+        messageProcessor = new Thread(this::processMessages);
+        running = false;
     }
 
     @Override
@@ -49,10 +28,9 @@ public class OrderEntryGateway implements MessageBusService {
         try {
             messages.put(message);
         } catch (InterruptedException e) {
-            e.printStackTrace();
             LOG.fatal("Thread interrupted, aborting...");
+            e.printStackTrace();
             stop();
-            send(message.getSession(), new Fail(Status.FatalFail, message));
         }
     }
 
@@ -63,22 +41,23 @@ public class OrderEntryGateway implements MessageBusService {
 
     public void stop() {
         running = false;
-        for (ExchangeEndpoint endpoint : endpoints.values()) {
-            endpoint.closeEndpoint();
-        }
     }
 
     // Thread method for handling requests
-    private void processRequests() {
+    private void processMessages() {
         LOG.info("OrderEntryGateway up and running!");
         while (running) {
             try {
                 Message message = messages.take();
                 LOG.info("Processing new {}", message);
+                // Check that message session or client id isn't null, otherwise return it as a Fail object
+                if (message.getSession() == null || message.getClientId() == null)
+                    message = new Fail(Status.OrderFail);
+                // Determine where to send the message, back to the endpoint or to the engine
                 if (message instanceof Order || message instanceof Cancel) {
-                    exchangeBus.sendMessage(Service.Engine, message);
+                    exchangeBus.sendMessage(MatchingEngine.class.getName(), message);
                 }
-                else send(message.getSession(), message);
+                else exchangeBus.sendMessage(message.getSession(), message);
             }
             catch (InterruptedException e) {
                 LOG.fatal("OrderEntryGateway interrupted!");

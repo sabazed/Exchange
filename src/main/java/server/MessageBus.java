@@ -2,10 +2,10 @@ package server;
 
 public interface MessageBus {
 
-    void registerService(Service serviceType, MessageBusService service);
+    void registerService(String serviceId, MessageBusService service);
 
-    void sendMessage(Service serviceType, Message message);
+    void unregisterService(String serviceId);
 
-    MessageBusService getService(Service serviceType);
+    void sendMessage(String serviceId, Message message);
 
 }

@@ -3,35 +3,41 @@ package server;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
-import java.util.HashMap;
-import java.util.Map;
+import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.ConcurrentMap;
 
 public class ExchangeBus implements MessageBus {
 
     private final static Logger LOG = LogManager.getLogger(ExchangeBus.class);
 
-    private final Map<Service, MessageBusService> services;
+    private final ConcurrentMap<String, MessageBusService> services;
 
     public ExchangeBus() {
-        services = new HashMap<>();
+        services = new ConcurrentHashMap<>();
     }
 
     @Override
-    public void registerService(Service serviceType, MessageBusService service) {
-        synchronized (this) {
-            services.put(serviceType, service); // TODO
+    public void registerService(String serviceId, MessageBusService service) {
+        services.put(serviceId, service);
+        LOG.info("Registered a new service with id: {}", serviceId);
+    }
+
+    @Override
+    public void unregisterService(String serviceId) {
+        services.remove(serviceId);
+        LOG.info("Unregistered service with id: {}", serviceId);
+    }
+
+    @Override
+    public void sendMessage(String serviceId, Message message) {
+        MessageBusService service = services.get(serviceId);
+        if (service != null) {
+            service.processMessage(message);
+            LOG.info("Sent service {} a new message {}", serviceId, message);
         }
-        LOG.info("{} registered a new {} with {}", this, serviceType, service);
+        else {
+            LOG.warn("Couldn't find registered service with id: {}", serviceId);
+        }
     }
 
-    @Override
-    public void sendMessage(Service serviceType, Message message) {
-        LOG.info("Sent {} a new message {}", serviceType, message);
-        services.get(serviceType).processMessage(message);
-    }
-
-    @Override
-    public MessageBusService getService(Service serviceType) {
-        return services.get(serviceType);
-    }
 }
