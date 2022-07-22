@@ -1,4 +1,6 @@
-package server;
+package exchange.services;
+
+import exchange.messages.Message;
 
 public interface MessageBusService {
 

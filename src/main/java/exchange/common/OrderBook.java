@@ -1,4 +1,6 @@
-package server;
+package exchange.common;
+
+import exchange.messages.Order;
 
 import java.util.TreeSet;
 

@@ -1,4 +1,4 @@
-package server;
+package exchange.endpoint;
 
 public class DecoderException extends RuntimeException {
 

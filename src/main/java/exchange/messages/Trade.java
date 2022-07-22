@@ -1,4 +1,4 @@
-package server;
+package exchange.messages;
 
 import java.math.BigDecimal;
 

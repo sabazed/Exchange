@@ -1,7 +1,7 @@
-package server;
+package exchange.endpoint;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.fasterxml.jackson.databind.exc.InvalidFormatException;
+import exchange.messages.Message;
 import jakarta.websocket.Decoder;
 
 import java.io.IOException;

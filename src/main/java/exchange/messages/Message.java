@@ -1,4 +1,4 @@
-package server;
+package exchange.messages;
 
 import com.fasterxml.jackson.annotation.JsonSubTypes;
 import com.fasterxml.jackson.annotation.JsonSubTypes.Type;

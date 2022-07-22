@@ -1,10 +1,11 @@
-package server;
+package exchange.messages;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
+import exchange.enums.Side;
+import exchange.common.Instrument;
 
 import java.math.BigDecimal;
 import java.time.Instant;
-import java.util.Comparator;
 
 public class Order implements Message {
 
@@ -34,7 +35,8 @@ public class Order implements Message {
     }
 
     // Constructor for Jackson decoder
-    public Order() { }
+    public Order() {
+    }
 
     public String getUser() {
         return user;
@@ -110,28 +112,6 @@ public class Order implements Message {
                 ", timestamp=" + timestamp +
                 ", globalId=" + globalId +
                 '}';
-    }
-
-}
-
-class OrderComparator implements Comparator<Order> {
-
-    private final int reversed;
-
-    public OrderComparator(boolean reverse) {
-        this.reversed = reverse ? -1 : 1;
-    }
-
-    @Override
-    public int compare(Order o1, Order o2) {
-        // Comparison priority: price - timestamp - id
-        int temp = o1.getPrice().compareTo(o2.getPrice());
-        if (temp == 0) {
-            if (!o1.getInstant().equals(o2.getInstant()))
-                return o1.getInstant().isBefore(o2.getInstant()) ? -1 : 1;
-            else return Long.compare(o1.getGlobalId(), o2.getGlobalId());
-        }
-        return temp * reversed;
     }
 
 }

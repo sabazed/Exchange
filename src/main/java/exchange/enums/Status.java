@@ -1,10 +1,6 @@
-package server;
+package exchange.enums;
 
-enum Side {
-    SELL, BUY
-}
-
-enum Status {
+public enum Status {
     CancelFail, OrderFail,
     Username, Instrument, Price, Quantity
 }

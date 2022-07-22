@@ -1,5 +1,11 @@
-package server;
+package exchange.services;
 
+import exchange.bus.MessageBus;
+import exchange.common.Instrument;
+import exchange.common.OrderBook;
+import exchange.enums.Side;
+import exchange.enums.Status;
+import exchange.messages.*;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
@@ -78,6 +84,7 @@ public class MatchingEngine implements MessageBusService {
                     if (instr == null) {
                         message = new Fail(Status.CancelFail, cancel);
                         exchangeBus.sendMessage(gatewayId, message);
+                        System.out.println("INSTR");
                     }
                     else {
                         // Get the tree of the orders with the same side
@@ -86,10 +93,12 @@ public class MatchingEngine implements MessageBusService {
                         if (!orders.remove(new Order(cancel))) {
                             message = new Fail(Status.CancelFail, cancel);
                             LOG.warn("Couldn't cancel current {}", cancel);
+                            System.out.println("REMOVE");
                         }
                         else message = new Remove(cancel);
                         // Send the message through the Response Bus
                         exchangeBus.sendMessage(gatewayId, message);
+                        System.out.println(orders.size() + " : " + cancel.getSide());
                     }
                 }
                 else if (message instanceof Order order){
@@ -107,7 +116,6 @@ public class MatchingEngine implements MessageBusService {
                         message = new Fail(Status.OrderFail, message);
                         exchangeBus.sendMessage(gatewayId, message);
                         LOG.warn("Invalid data in {}", message);
-
                     }
                     else {
                         boolean invalid = false;
@@ -142,14 +150,23 @@ public class MatchingEngine implements MessageBusService {
                                 Iterator<Order> iterator = otherTree.iterator();
                                 Order matched = iterator.hasNext() ? iterator.next() : null;
                                 // Iterate over the orders if the users are the same
+                                if (matched != null) System.out.println(matched);
                                 while (iterator.hasNext() && matched.getUser().equals(order.getUser()))
                                     matched = iterator.next();
                                 // If the users are still same we assign matched as null, or consider two cases:
                                 // Case Sell: if matched price is higher or equal else matched = null
                                 // Case Buy: if matched price is lower or equal else matched = null
+                                if (matched != null)
+                                    System.out.println(matched.getUser() + " : " + order.getUser());
                                 if (matched != null && (matched.getUser().equals(order.getUser()) ||
                                     matched.getPrice().compareTo(order.getPrice()) * ((order.getSide() == Side.BUY) ? 1 : -1) > 0)
                                 ) matched = null;
+                                if (matched != null)
+                                    System.out.println(matched.getUser().equals(order.getUser()) ||
+                                        matched.getPrice().compareTo(order.getPrice()) * ((order.getSide() == Side.BUY) ? 1 : -1) > 0);
+                                System.out.println(matched);
+                                System.out.println(" > " + ownTree.size() + " : " + order.getSide());
+                                System.out.println(" > " + otherTree.size() + " OTHER");
                                 // If no match was found then add the order
                                 if (matched == null) {
                                     order.setGlobalId(ID++);
@@ -176,7 +193,7 @@ public class MatchingEngine implements MessageBusService {
                                         LOG.info("Listing message successful after trading - {}", message);
                                     } else {
                                         order.setQty(order.getQty().subtract(matched.getQty()));
-                                        otherTree.pollFirst();
+                                        otherTree.remove(matched);
                                         matched.setQty(BigDecimal.ZERO);
                                         // If the order ran out of remaining qty then mark it as traded and send the message
                                         if (order.getQty().compareTo(BigDecimal.ZERO) <= 0) {
@@ -194,6 +211,8 @@ public class MatchingEngine implements MessageBusService {
                             }
                         }
                     }
+                    System.out.println(ownTree.size() + " : " + order.getSide());
+                    System.out.println(otherTree.size() + " OTHER");
                 }
             }
             catch (InterruptedException e) {

@@ -1,4 +1,4 @@
-package server;
+package exchange.endpoint;
 
 import jakarta.servlet.ServletContext;
 import jakarta.servlet.http.HttpSession;

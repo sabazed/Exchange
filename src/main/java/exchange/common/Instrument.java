@@ -1,4 +1,4 @@
-package server;
+package exchange.common;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
 

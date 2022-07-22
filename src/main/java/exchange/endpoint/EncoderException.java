@@ -1,4 +1,6 @@
-package server;
+package exchange.endpoint;
+
+import exchange.messages.Message;
 
 public class EncoderException extends RuntimeException {
 

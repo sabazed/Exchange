@@ -1,5 +1,7 @@
-package server;
+package exchange.bus;
 
+import exchange.messages.Message;
+import exchange.services.MessageBusService;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
