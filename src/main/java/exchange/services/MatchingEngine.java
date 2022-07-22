@@ -17,7 +17,7 @@ import java.util.TreeSet;
 import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.LinkedBlockingQueue;
 
-public class MatchingEngine implements MessageBusService {
+public class MatchingEngine extends MessageProcessor {
 
     private final static Logger LOG = LogManager.getLogger(MatchingEngine.class);
 
@@ -27,15 +27,12 @@ public class MatchingEngine implements MessageBusService {
     private final HashMap<Instrument, OrderBook> orderBooks;
     // Response bus to send responses for frontend
     private final MessageBus exchangeBus;
-    // Thread which will process orders
-    private final Thread messageProcessor;
-    // Marker if the engine is running or not
-    private volatile boolean running;
+    // Gateway ID for bus
+    private final String gatewayId;
 
     // Keep count of orders to give them unique IDs
     private static long ID = 0;
-    // Gateway ID for bus
-    private final String gatewayId;
+
 
     public MatchingEngine(MessageBus messageBus, String serviceID) {
 
@@ -43,11 +40,9 @@ public class MatchingEngine implements MessageBusService {
         orderBooks = new HashMap<>();
         exchangeBus = messageBus;
         gatewayId = serviceID;
-
-        messageProcessor = new Thread(this::processMessages);
-        running = false;
     }
 
+    @Override
     public void processMessage(Message message) {
         try {
             newOrders.put(message);
@@ -59,20 +54,11 @@ public class MatchingEngine implements MessageBusService {
         }
     }
 
-    public void start() {
-        running = true;
-        messageProcessor.start();
-    }
-
-    public void stop() {
-        running = false;
-    }
-
-    // Main method that the thread will run on
-    private void processMessages() {
+    @Override
+    protected void processMessages() {
         LOG.info("MatchingEngine up and running!");
         // Run endlessly
-        while (running) {
+        while (isRunning()) {
             try {
                 // Receive order from the queue, if it is empty - wait for it.
                 Message message = newOrders.take();

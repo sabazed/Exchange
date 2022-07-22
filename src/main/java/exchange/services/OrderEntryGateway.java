@@ -12,7 +12,7 @@ import org.apache.logging.log4j.Logger;
 import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.LinkedBlockingQueue;
 
-public class OrderEntryGateway implements MessageBusService {
+public class OrderEntryGateway extends MessageProcessor {
 
     private static final Logger LOG = LogManager.getLogger(OrderEntryGateway.class);
 
@@ -20,15 +20,11 @@ public class OrderEntryGateway implements MessageBusService {
     private final MessageBus exchangeBus;
     private final String engineId;
 
-    private final Thread messageProcessor;
-    private volatile boolean running;
-
     public OrderEntryGateway(MessageBus messageBus, String serviceId) {
+        super();
         messages = new LinkedBlockingQueue<>();
         exchangeBus = messageBus;
         engineId = serviceId;
-        messageProcessor = new Thread(this::processMessages);
-        running = false;
     }
 
     @Override
@@ -42,19 +38,10 @@ public class OrderEntryGateway implements MessageBusService {
         }
     }
 
-    public void start() {
-        running = true;
-        messageProcessor.start();
-    }
-
-    public void stop() {
-        running = false;
-    }
-
-    // Thread method for handling requests
-    private void processMessages() {
+    @Override
+    protected void processMessages() {
         LOG.info("OrderEntryGateway up and running!");
-        while (running) {
+        while (isRunning()) {
             try {
                 Message message = messages.take();
                 LOG.info("Processing new {}", message);
@@ -75,5 +62,7 @@ public class OrderEntryGateway implements MessageBusService {
         }
         LOG.info("OrderEntryGateway stopped working...");
     }
+
+
 
 }

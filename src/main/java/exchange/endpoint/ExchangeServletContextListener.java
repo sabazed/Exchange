@@ -53,8 +53,4 @@ public class ExchangeServletContextListener implements ServletContextListener {
         gateway.stop();
     }
 
-    public MessageBus getExchangeBus() {
-        return exchangeBus;
-    }
-
 }
