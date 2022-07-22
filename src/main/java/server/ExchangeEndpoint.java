@@ -1,9 +1,7 @@
 package server;
 
-import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.exc.InvalidFormatException;
 import jakarta.servlet.ServletContext;
-import jakarta.servlet.http.HttpSession;
 import jakarta.websocket.*;
 import jakarta.websocket.server.ServerEndpoint;
 import org.apache.logging.log4j.LogManager;
@@ -38,10 +36,8 @@ public class ExchangeEndpoint implements MessageBusService {
         this.session = session;
         // Get the servlet context through custom config with added user attribute
         ServletContext ctx = (ServletContext) config.getUserProperties().get(ServletContext.class.getName());
-        // Get the actual listener object which added itself also as an attribute during context initialization
-        ExchangeServletContextListener listener = (ExchangeServletContextListener) ctx.getAttribute(ExchangeServletContextListener.class.getName());
         // Get the exchange bus and register the endpoint
-        this.exchangeBus = (ExchangeBus) listener.getExchangeBus();
+        this.exchangeBus = (ExchangeBus) ctx.getAttribute(MessageBus.class.getName());
         this.exchangeBus.registerService(session.getId(), this);
     }
 
@@ -59,7 +55,7 @@ public class ExchangeEndpoint implements MessageBusService {
 
     @OnClose
     public void onClose(Session session) {
-        LOG.info("Client connected with session {}", session.getId());
+        LOG.info("Client disconnected with session {}", session.getId());
         exchangeBus.unregisterService(session.getId());
     }
 
@@ -80,7 +76,7 @@ public class ExchangeEndpoint implements MessageBusService {
         }
         else {
             LOG.error(t.getClass().getName() + " at session {}, disconnecting...", session.getId());
-            LOG.error(t);
+            LOG.error(t.getCause());
         }
         // TODO: Stop websocket from closing
     }

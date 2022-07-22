@@ -81,7 +81,7 @@ public class MatchingEngine implements MessageBusService {
                     }
                     else {
                         // Get the tree of the orders with the same side
-                        TreeSet<Order> orders = cancel.getSide() == Side.SELL ? instr.getSellOrders() : instr.getBuyOrders();
+                        TreeSet<Order> orders = (cancel.getSide() == Side.SELL) ? instr.getSellOrders() : instr.getBuyOrders();
                         // If removal couldn't be done change the status to CancelFail
                         if (!orders.remove(new Order(cancel))) {
                             message = new Fail(Status.CancelFail, cancel);
@@ -153,7 +153,7 @@ public class MatchingEngine implements MessageBusService {
                                 // If no match was found then add the order
                                 if (matched == null) {
                                     order.setGlobalId(ID++);
-                                    order.setDateInst(Instant.now());
+                                    order.setInstant(Instant.now());
                                     // If there was a problem while adding then change status flag to OrderFail and decrease ID counter
                                     if (!ownTree.add(order)) {
                                         message = new Fail(Status.OrderFail, message);
@@ -170,7 +170,7 @@ public class MatchingEngine implements MessageBusService {
                                     if (matched.getQty().compareTo(order.getQty()) > 0) {
                                         matched.setQty(matched.getQty().subtract(order.getQty()));
                                         order.setGlobalId(ID++);
-                                        order.setDateInst(Instant.now());
+                                        order.setInstant(Instant.now());
                                         message = new Trade(order);
                                         exchangeBus.sendMessage(gatewayName, message);
                                         LOG.info("Listing message successful after trading - {}", message);

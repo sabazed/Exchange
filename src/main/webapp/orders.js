@@ -72,7 +72,9 @@ function sendRemove(bid) {
     let json = {};
     json.type = "Cancel";
     json.instrument = orders[arr[1]].instrument;
+    json.price = orders[arr[1]].price;
     json.side = orders[arr[1]].side;
+    json.timestamp = orders[arr[1]].timestamp;
     json.clientId = orders[arr[1]].clientId;
     json.globalId = orders[arr[1]].globalId;
     console.log(json);
@@ -101,8 +103,7 @@ function tradeOrder(trade) {
         document.getElementById(order.clientId).innerHTML =
             `                    <button type=\"submit\" class=\"cancel\" id=\"${order.user}-${order.clientId}" onclick="sendRemove(this.id)">x</button>\n` +
             `                    <span style=\"color: ${color}\">${order.side} Order </span><span>${order.clientId} - Instrument: ${order.instrument.name}, User: ${order.user}<br> Price: ${order.price}$, Quantity: ${order.qty}</span>\n`;
-    }
-    else {
+    } else {
         removeOrder(order.clientId);
     }
     tradeNotif(order.clientId);

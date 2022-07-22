@@ -15,7 +15,7 @@ public class Order implements Message {
     private BigDecimal qty;
 
     private String session;
-    private Instant date;
+    private Instant timestamp;
 
     private String clientId;
     private long globalId;
@@ -24,13 +24,13 @@ public class Order implements Message {
     public Order(Cancel cancel) {
         session = cancel.getSession();
         instrument = cancel.getInstrument();
+        price = cancel.getPrice();
         side = cancel.getSide();
+        timestamp = cancel.getTimestamp();
         clientId = cancel.getClientId();
         globalId = cancel.getGlobalId();
         user = null;
-        price = null;
         qty = null;
-        date = null;
     }
 
     // Constructor for Jackson decoder
@@ -60,22 +60,22 @@ public class Order implements Message {
         return price;
     }
 
-    public String getDate() {
-        return date != null ? date.toString() : null;
+    public String getTimestamp() {
+        return timestamp != null ? timestamp.toString() : null;
     }
 
-    public void setDate(String date) {
-        this.date = Instant.parse(date);
-    }
-
-    @JsonIgnore
-    public Instant getDateInst() {
-        return date;
+    public void setTimestamp(String timestamp) {
+        this.timestamp = Instant.parse(timestamp);
     }
 
     @JsonIgnore
-    public void setDateInst(Instant date) {
-        this.date = date;
+    public Instant getInstant() {
+        return timestamp;
+    }
+
+    @JsonIgnore
+    public void setInstant(Instant timestamp) {
+        this.timestamp = timestamp;
     }
 
     public String getClientId() {
@@ -101,13 +101,13 @@ public class Order implements Message {
     @Override
     public String toString() {
         return "Order{user='" + user + '\'' +
-                ", instrument=" + instrument.getId() +
+                ", instrument=" + instrument.getName() +
                 ", side=" + side +
                 ", price=" + price +
                 ", clientId='" + clientId + '\'' +
                 ", session='" + session + '\'' +
                 ", qty=" + qty +
-                ", date=" + date +
+                ", timestamp=" + timestamp +
                 ", globalId=" + globalId +
                 '}';
     }
@@ -124,12 +124,11 @@ class OrderComparator implements Comparator<Order> {
 
     @Override
     public int compare(Order o1, Order o2) {
-        if (o1.getPrice() == null) return Long.compare(o1.getGlobalId(), o2.getGlobalId());
-        // Comparison priority: price - date - id
+        // Comparison priority: price - timestamp - id
         int temp = o1.getPrice().compareTo(o2.getPrice());
         if (temp == 0) {
-            if (!o1.getDateInst().equals(o2.getDateInst()))
-                return o1.getDateInst().isBefore(o2.getDateInst()) ? -1 : 1;
+            if (!o1.getInstant().equals(o2.getInstant()))
+                return o1.getInstant().isBefore(o2.getInstant()) ? -1 : 1;
             else return Long.compare(o1.getGlobalId(), o2.getGlobalId());
         }
         return temp * reversed;

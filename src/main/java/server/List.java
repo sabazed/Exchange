@@ -13,7 +13,7 @@ public class List implements Message {
     private BigDecimal qty;
 
     private String session;
-    private Instant date;
+    private Instant timestamp;
 
     private String clientId;
     private long globalId;
@@ -25,7 +25,7 @@ public class List implements Message {
         this.price = order.getPrice();
         this.qty = order.getQty();
         this.session = order.getSession();
-        this.date = order.getDateInst();
+        this.timestamp = order.getInstant();
         this.clientId = order.getClientId();
         this.globalId = order.getGlobalId();
     }
@@ -55,8 +55,8 @@ public class List implements Message {
         return price;
     }
 
-    public String getDate() {
-        return date != null ? date.toString() : null;
+    public String getTimestamp() {
+        return timestamp != null ? timestamp.toString() : null;
     }
 
     public String getClientId() {
@@ -72,20 +72,20 @@ public class List implements Message {
     }
 
     @JsonIgnore
-    public Instant getDateInst() {
-        return this.date;
+    public Instant getInstant() {
+        return this.timestamp;
     }
 
     @Override
     public String toString() {
         return "List{" +
                 "user='" + user + '\'' +
-                ", instrument=" + instrument.getId() +
+                ", instrument=" + instrument.getName() +
                 ", side=" + side +
                 ", price=" + price +
                 ", qty=" + qty +
                 ", session='" + session + '\'' +
-                ", date=" + date +
+                ", timestamp=" + timestamp +
                 ", clientId='" + clientId + '\'' +
                 ", globalId=" + globalId +
                 '}';

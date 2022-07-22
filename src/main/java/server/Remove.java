@@ -48,7 +48,7 @@ public class Remove implements Message {
     public String toString() {
         return "Remove{" +
                 "session='" + session + '\'' +
-                ", instrument=" + instrument.getId() +
+                ", instrument=" + instrument.getName() +
                 ", side=" + side +
                 ", clientId='" + clientId + '\'' +
                 ", globalId=" + globalId +
