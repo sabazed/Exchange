@@ -1,6 +1,6 @@
 package server;
 
-public class Cancel implements Message, Comparable<Order> {
+public class Cancel implements Message {
 
     private String session;
     private Instrument instrument;
@@ -47,8 +47,4 @@ public class Cancel implements Message, Comparable<Order> {
                 '}';
     }
 
-    @Override
-    public int compareTo(Order o) {
-        return Long.compare(globalId, o.getGlobalId());
-    }
 }

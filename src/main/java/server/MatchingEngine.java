@@ -83,7 +83,7 @@ public class MatchingEngine implements MessageBusService {
                         // Get the tree of the orders with the same side
                         TreeSet<Order> orders = cancel.getSide() == Side.SELL ? instr.getSellOrders() : instr.getBuyOrders();
                         // If removal couldn't be done change the status to CancelFail
-                        if (!orders.remove(cancel)) {
+                        if (!orders.remove(new Order(cancel))) {
                             message = new Fail(Status.CancelFail, cancel);
                             LOG.warn("Couldn't cancel current {}", cancel);
                         }
