@@ -28,12 +28,12 @@ public class ExchangeServletContextListener implements ServletContextListener {
         exchangeBus = new ExchangeBus();
         // Create both service instances
         LOG.info("Initializing a new Matching Engine");
-        engine = new MatchingEngine(exchangeBus);
+        engine = new MatchingEngine(exchangeBus, "OrderEntryGateway_0");
         LOG.info("Initializing a new Order Entry Gateway");
-        gateway = new OrderEntryGateway(exchangeBus);
+        gateway = new OrderEntryGateway(exchangeBus, "MatchingEngine_0");
         // Register both instances
-        exchangeBus.registerService(MatchingEngine.class.getName(), engine);
-        exchangeBus.registerService(OrderEntryGateway.class.getName(), gateway);
+        exchangeBus.registerService("MatchingEngine_0", engine);
+        exchangeBus.registerService("OrderEntryGateway_0", gateway);
         // Start the services
         engine.start();
         gateway.start();

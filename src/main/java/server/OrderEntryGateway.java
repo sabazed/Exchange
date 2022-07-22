@@ -12,13 +12,15 @@ public class OrderEntryGateway implements MessageBusService {
 
     private final BlockingQueue<Message> messages;
     private final MessageBus exchangeBus;
+    private final String engineId;
 
     private final Thread messageProcessor;
     private volatile boolean running;
 
-    public OrderEntryGateway(MessageBus messageBus) {
+    public OrderEntryGateway(MessageBus messageBus, String serviceId) {
         messages = new LinkedBlockingQueue<>();
         exchangeBus = messageBus;
+        engineId = serviceId;
         messageProcessor = new Thread(this::processMessages);
         running = false;
     }
@@ -55,9 +57,9 @@ public class OrderEntryGateway implements MessageBusService {
                     message = new Fail(Status.OrderFail);
                 // Determine where to send the message, back to the endpoint or to the engine
                 if (message instanceof Order || message instanceof Cancel) {
-                    exchangeBus.sendMessage(MatchingEngine.class.getName(), message);
+                    exchangeBus.sendMessage(engineId, message);
                 }
-                else exchangeBus.sendMessage(message.getSession(), message);
+                else exchangeBus.sendMessage("ServerEndpoint_" + message.getSession(), message);
             }
             catch (InterruptedException e) {
                 LOG.fatal("OrderEntryGateway interrupted!");

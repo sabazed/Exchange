@@ -28,18 +28,18 @@ public class MatchingEngine implements MessageBusService {
 
     // Keep count of orders to give them unique IDs
     private static long ID = 0;
-    // Just a shortcut
-    private static final String gatewayName = OrderEntryGateway.class.getName();
+    // Gateway ID for bus
+    private final String gatewayId;
 
-    public MatchingEngine(MessageBus messageBus) {
+    public MatchingEngine(MessageBus messageBus, String serviceID) {
 
         newOrders = new LinkedBlockingQueue<>();
         orderBooks = new HashMap<>();
         exchangeBus = messageBus;
+        gatewayId = serviceID;
 
         messageProcessor = new Thread(this::processMessages);
         running = false;
-
     }
 
     public void processMessage(Message message) {
@@ -77,7 +77,7 @@ public class MatchingEngine implements MessageBusService {
                     OrderBook instr = orderBooks.get(cancel.getInstrument());
                     if (instr == null) {
                         message = new Fail(Status.CancelFail, cancel);
-                        exchangeBus.sendMessage(gatewayName, message);
+                        exchangeBus.sendMessage(gatewayId, message);
                     }
                     else {
                         // Get the tree of the orders with the same side
@@ -89,7 +89,7 @@ public class MatchingEngine implements MessageBusService {
                         }
                         else message = new Remove(cancel);
                         // Send the message through the Response Bus
-                        exchangeBus.sendMessage(gatewayName, message);
+                        exchangeBus.sendMessage(gatewayId, message);
                     }
                 }
                 else if (message instanceof Order order){
@@ -105,7 +105,7 @@ public class MatchingEngine implements MessageBusService {
                     // Check if all data are valid and if not, skip the iteration and send the error message
                     if (order.getSide() == null || order.getSession() == null || order.getClientId() == null || order.getClientId().isBlank()) {
                         message = new Fail(Status.OrderFail, message);
-                        exchangeBus.sendMessage(gatewayName, message);
+                        exchangeBus.sendMessage(gatewayId, message);
                         LOG.warn("Invalid data in {}", message);
 
                     }
@@ -130,7 +130,7 @@ public class MatchingEngine implements MessageBusService {
                         }
                         // If any error exists then log the field and send the message, otherwise continue the loop
                         if (invalid) {
-                            exchangeBus.sendMessage(gatewayName, message);
+                            exchangeBus.sendMessage(gatewayId, message);
                             LOG.info("Invalid user input field in {}", message);
                         }
                         else {
@@ -164,7 +164,7 @@ public class MatchingEngine implements MessageBusService {
                                         message = new List(order);
                                         LOG.info("Listing message successful! - {}", message);
                                     }
-                                    exchangeBus.sendMessage(gatewayName, message);
+                                    exchangeBus.sendMessage(gatewayId, message);
                                 } else {
                                     // If currently matched order has more quantity then mark our message as traded
                                     if (matched.getQty().compareTo(order.getQty()) > 0) {
@@ -172,7 +172,7 @@ public class MatchingEngine implements MessageBusService {
                                         order.setGlobalId(ID++);
                                         order.setInstant(Instant.now());
                                         message = new Trade(order);
-                                        exchangeBus.sendMessage(gatewayName, message);
+                                        exchangeBus.sendMessage(gatewayId, message);
                                         LOG.info("Listing message successful after trading - {}", message);
                                     } else {
                                         order.setQty(order.getQty().subtract(matched.getQty()));
@@ -181,14 +181,14 @@ public class MatchingEngine implements MessageBusService {
                                         // If the order ran out of remaining qty then mark it as traded and send the message
                                         if (order.getQty().compareTo(BigDecimal.ZERO) <= 0) {
                                             message = new Trade(order);
-                                            exchangeBus.sendMessage(gatewayName, message);
+                                            exchangeBus.sendMessage(gatewayId, message);
                                             LOG.info("Traded successfully - {}", message);
                                         }
                                         // If qty is more than 0 then continue iteration
                                         else repeatMatching = true;
                                     }
                                     // Send trade signal for the matched order
-                                    exchangeBus.sendMessage(gatewayName, new Trade(matched));
+                                    exchangeBus.sendMessage(gatewayId, new Trade(matched));
                                     LOG.info("Order {} traded - {}", matched.getGlobalId(), matched);
                                 }
                             }

@@ -38,7 +38,7 @@ public class ExchangeEndpoint implements MessageBusService {
         ServletContext ctx = (ServletContext) config.getUserProperties().get(ServletContext.class.getName());
         // Get the exchange bus and register the endpoint
         this.exchangeBus = (ExchangeBus) ctx.getAttribute(MessageBus.class.getName());
-        this.exchangeBus.registerService(session.getId(), this);
+        this.exchangeBus.registerService("ServerEndpoint_" + session.getId(), this);
     }
 
     @OnMessage
@@ -49,7 +49,7 @@ public class ExchangeEndpoint implements MessageBusService {
             processMessage(message);
         }
         else {
-            exchangeBus.sendMessage(OrderEntryGateway.class.getName(), message);
+            exchangeBus.sendMessage("OrderEntryGateway_0", message);
         }
     }
 
