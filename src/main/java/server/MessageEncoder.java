@@ -9,11 +9,10 @@ public class MessageEncoder implements Encoder.Text<Message> {
     @Override
     public String encode(Message message) {
         ObjectMapper mapper = new ObjectMapper();
-        String json = "";
+        String json;
         try {
             json = mapper.writeValueAsString(message);
         } catch (JsonProcessingException e) {
-            e.printStackTrace();
             throw new EncoderException(message, e);
         }
         return json;

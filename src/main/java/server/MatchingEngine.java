@@ -48,7 +48,7 @@ public class MatchingEngine implements MessageBusService {
         }
         catch (InterruptedException e) {
             LOG.fatal("Thread interrupted, aborting...");
-            e.printStackTrace();
+            LOG.fatal(e);
             stop();
         }
     }
@@ -198,7 +198,7 @@ public class MatchingEngine implements MessageBusService {
             }
             catch (InterruptedException e) {
                 LOG.fatal("Matching Engine interrupted!");
-                e.printStackTrace();
+                LOG.fatal(e);
                 stop();
             }
         }

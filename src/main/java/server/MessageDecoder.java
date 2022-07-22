@@ -14,25 +14,8 @@ public class MessageDecoder implements Decoder.Text<Message> {
         Message message;
         try {
             message = mapper.readValue(json, Message.class);
-        } catch (InvalidFormatException e) {
-            // Check which is invalid - price or qty
-            String errorMessage = e.getPathReference();
-            int start = errorMessage.indexOf("\"");
-            int end = errorMessage.lastIndexOf("\"");
-            String field = errorMessage.substring(start + 1, end);
-            if (field.equals("price")) {
-                message = new Fail(Status.Price);
-            }
-            else if (field.equals("qty")) {
-                message = new Fail(Status.Quantity);
-            }
-            else {
-                e.printStackTrace();
-                throw new DecoderException(json, e);
-            }
         }
         catch (IOException e) {
-            e.printStackTrace();
             throw new DecoderException(json, e);
         }
         return message;

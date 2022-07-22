@@ -36,7 +36,7 @@ public class ExchangeBus implements MessageBus {
             LOG.info("Sent service {} a new message {}", serviceId, message);
         }
         else {
-            LOG.warn("Couldn't find registered service with id: {}", serviceId);
+            LOG.warn("Couldn't find registered service with id {} from {}", serviceId, message);
         }
     }
 

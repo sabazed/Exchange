@@ -3,11 +3,11 @@ package server;
 public class DecoderException extends RuntimeException {
 
     private final String message;
-    private final Throwable throwable;
+    private final Throwable cause;
 
     public DecoderException(String message, Throwable throwable) {
         this.message = message;
-        this.throwable = throwable;
+        this.cause = throwable;
     }
 
     @Override
@@ -15,8 +15,9 @@ public class DecoderException extends RuntimeException {
         return message;
     }
 
-    public Throwable getThrowable() {
-        return throwable;
+    @Override
+    public Throwable getCause() {
+        return cause;
     }
 
     @Override

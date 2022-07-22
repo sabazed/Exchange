@@ -1,5 +1,7 @@
 package server;
 
+import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.databind.exc.InvalidFormatException;
 import jakarta.servlet.ServletContext;
 import jakarta.servlet.http.HttpSession;
 import jakarta.websocket.*;
@@ -24,12 +26,9 @@ public class ExchangeEndpoint implements MessageBusService {
         try {
             session.getBasicRemote().sendObject(message);
             LOG.info("Sent session {} the message - {}", session.getId(), message);
-        } catch (IOException e) {
-            LOG.error("Connection to session {} interrupted!", session);
-            e.printStackTrace();
-        } catch (EncodeException e) {
-            LOG.warn("Couldn't encode for session {} with {}", session, message);
-            e.printStackTrace();
+        } catch (IOException | EncodeException e) {
+            LOG.error("Could not send session {} object {}!", session.getId(), message);
+            LOG.error(e);
         }
     }
 
@@ -66,9 +65,24 @@ public class ExchangeEndpoint implements MessageBusService {
 
     @OnError
     public void onError(Session session, Throwable t) {
-        LOG.error(t.getClass().getName() + " at session {}, disconnecting...", session.getId());
-        exchangeBus.unregisterService(session.getId());
-        t.printStackTrace();
+        if (t.getCause() instanceof InvalidFormatException e) {
+            // Check which is invalid - price or qty
+            String errorMessage = e.getPathReference();
+            int start = errorMessage.indexOf("\"");
+            int end = errorMessage.lastIndexOf("\"");
+            String field = errorMessage.substring(start + 1, end);
+            if (field.equals("price")) {
+                processMessage(new Fail(Status.Price));
+            }
+            else {
+                processMessage(new Fail(Status.Quantity));
+            }
+        }
+        else {
+            LOG.error(t.getClass().getName() + " at session {}, disconnecting...", session.getId());
+            LOG.error(t);
+        }
+        // TODO: Stop websocket from closing
     }
 
 }
