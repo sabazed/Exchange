@@ -2,6 +2,8 @@ package exchange.common;
 
 import exchange.messages.Order;
 
+import java.util.HashMap;
+import java.util.Map;
 import java.util.TreeSet;
 
 public class OrderBook {
@@ -10,11 +12,15 @@ public class OrderBook {
     private final Instrument instrument;
     private final TreeSet<Order> buyOrders;
     private final TreeSet<Order> sellOrders;
+    private final Map<Long, Order> buyOrderMap;
+    private final Map<Long, Order> sellOrderMap;
 
     public OrderBook(Instrument instrument) {
         this.instrument = instrument;
         buyOrders = new TreeSet<>(new OrderComparator(true));
         sellOrders = new TreeSet<>(new OrderComparator(false));
+        buyOrderMap = new HashMap<>();
+        sellOrderMap = new HashMap<>();
     }
 
     public Instrument getInstrument() {
@@ -29,4 +35,11 @@ public class OrderBook {
         return sellOrders;
     }
 
+    public Map<Long, Order> getBuyOrderMap() {
+        return buyOrderMap;
+    }
+
+    public Map<Long, Order> getSellOrderMap() {
+        return sellOrderMap;
+    }
 }

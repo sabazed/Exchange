@@ -21,23 +21,6 @@ public class Order implements Message {
     private String clientId;
     private long globalId;
 
-    // Constructor for converting Cancel into Order
-    public Order(Cancel cancel) {
-        session = cancel.getSession();
-        instrument = cancel.getInstrument();
-        price = cancel.getPrice();
-        side = cancel.getSide();
-        timestamp = cancel.getTimestamp();
-        clientId = cancel.getClientId();
-        globalId = cancel.getGlobalId();
-        user = null;
-        qty = null;
-    }
-
-    // Constructor for Jackson decoder
-    public Order() {
-    }
-
     public String getUser() {
         return user;
     }

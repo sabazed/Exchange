@@ -13,6 +13,7 @@ import java.math.BigDecimal;
 import java.time.Instant;
 import java.util.HashMap;
 import java.util.Iterator;
+import java.util.Map;
 import java.util.TreeSet;
 import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.LinkedBlockingQueue;
@@ -74,12 +75,17 @@ public class MatchingEngine extends MessageProcessor {
                     else {
                         // Get the tree of the orders with the same side
                         TreeSet<Order> orders = (cancel.getSide() == Side.SELL) ? instr.getSellOrders() : instr.getBuyOrders();
-                        // If removal couldn't be done change the status to CancelFail
-                        if (!orders.remove(new Order(cancel))) {
-                            message = new Fail(Status.CancelFail, cancel);
-                            LOG.warn("Couldn't cancel current {}", cancel);
+                        Map<Long, Order> orderMap = (cancel.getSide() == Side.SELL) ? instr.getSellOrderMap() : instr.getBuyOrderMap();
+                        // Check if the map contains the order
+                        Order order = orderMap.remove(cancel.getGlobalId());
+                        if (order != null) {
+                            // If removal couldn't be done change the status to CancelFail
+                            if (!orders.remove(order)) {
+                                message = new Fail(Status.CancelFail, cancel);
+                                LOG.warn("Couldn't cancel current {}", cancel);
+                            } else message = new Remove(cancel);
                         }
-                        else message = new Remove(cancel);
+                        else message = new Fail(Status.CancelFail, cancel);
                         // Send the message through the Response Bus
                         exchangeBus.sendMessage(gatewayId, message);
                     }
@@ -94,6 +100,8 @@ public class MatchingEngine extends MessageProcessor {
                     // Save trees of both sides as the message's own side tree and opposite tree
                     TreeSet<Order> ownTree = order.getSide() == Side.SELL ? instr.getSellOrders() : instr.getBuyOrders();
                     TreeSet<Order> otherTree = order.getSide() == Side.SELL ? instr.getBuyOrders() : instr.getSellOrders();
+                    Map<Long, Order> ownMap = order.getSide() == Side.SELL ? instr.getSellOrderMap() : instr.getBuyOrderMap();
+                    Map<Long, Order> otherMap = order.getSide() == Side.SELL ? instr.getBuyOrderMap() : instr.getSellOrderMap();
                     // Check if all data are valid and if not, skip the iteration and send the error message
                     if (order.getSide() == null || order.getSession() == null || order.getClientId() == null || order.getClientId().isBlank()) {
                         message = new Fail(Status.OrderFail, message);
@@ -152,6 +160,7 @@ public class MatchingEngine extends MessageProcessor {
                                         LOG.warn("Listing message unsuccessful! - {}", message);
                                     }
                                     else {
+                                        ownMap.put(order.getGlobalId(), order);
                                         message = new List(order);
                                         LOG.info("Listing message successful! - {}", message);
                                     }
@@ -168,6 +177,7 @@ public class MatchingEngine extends MessageProcessor {
                                     } else {
                                         order.setQty(order.getQty().subtract(matched.getQty()));
                                         otherTree.remove(matched);
+                                        otherMap.remove(matched.getGlobalId());
                                         matched.setQty(BigDecimal.ZERO);
                                         // If the order ran out of remaining qty then mark it as traded and send the message
                                         if (order.getQty().compareTo(BigDecimal.ZERO) <= 0) {
