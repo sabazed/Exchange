@@ -1,4 +1,4 @@
-package exchange.endpoint;
+package exchange.websocketendpoint;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import exchange.messages.Message;

@@ -49,8 +49,7 @@ public class MatchingEngine extends MessageProcessor {
             newOrders.put(message);
         }
         catch (InterruptedException e) {
-            LOG.fatal("Thread interrupted, aborting...");
-            LOG.fatal(e);
+            LOG.error("Thread interrupted, aborting...", e);
             stop();
         }
     }
@@ -59,7 +58,7 @@ public class MatchingEngine extends MessageProcessor {
     protected void processMessages() {
         LOG.info("MatchingEngine up and running!");
         // Run endlessly
-        while (isRunning()) {
+        while (running) {
             try {
                 // Receive order from the queue, if it is empty - wait for it.
                 Message message = newOrders.take();
@@ -198,8 +197,7 @@ public class MatchingEngine extends MessageProcessor {
                 }
             }
             catch (InterruptedException e) {
-                LOG.fatal("Matching Engine interrupted!");
-                LOG.fatal(e);
+                LOG.error("Matching Engine interrupted!", e);
                 stop();
             }
         }

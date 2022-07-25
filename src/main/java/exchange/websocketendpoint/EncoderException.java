@@ -1,4 +1,4 @@
-package exchange.endpoint;
+package exchange.websocketendpoint;
 
 import exchange.messages.Message;
 

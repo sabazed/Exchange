@@ -1,4 +1,4 @@
-package exchange.endpoint;
+package exchange.websocketendpoint;
 
 import exchange.services.MatchingEngine;
 import exchange.services.OrderEntryGateway;
@@ -41,8 +41,7 @@ public class ExchangeServletContextListener implements ServletContextListener {
             );
         }
         catch(DeploymentException e) {
-            LOG.error("Couldn't add endpoint to server container!");
-            LOG.error(e);
+            LOG.error("Couldn't add endpoint to server container!", e);
         }
 
         // Configure the root logger
@@ -53,12 +52,12 @@ public class ExchangeServletContextListener implements ServletContextListener {
         exchangeBus = new ExchangeBus();
         // Create both service instances
         LOG.info("Initializing a new Matching Engine");
-        engine = new MatchingEngine(exchangeBus, "OrderEntryGateway_0");
+        engine = new MatchingEngine(exchangeBus, "OrderEntryGateway");
         LOG.info("Initializing a new Order Entry Gateway");
-        gateway = new OrderEntryGateway(exchangeBus, "MatchingEngine_0");
+        gateway = new OrderEntryGateway(exchangeBus, "MatchingEngine");
         // Register both instances
-        exchangeBus.registerService("MatchingEngine_0", engine);
-        exchangeBus.registerService("OrderEntryGateway_0", gateway);
+        exchangeBus.registerService("MatchingEngine", engine);
+        exchangeBus.registerService("OrderEntryGateway", gateway);
         // Start the services
         engine.start();
         gateway.start();

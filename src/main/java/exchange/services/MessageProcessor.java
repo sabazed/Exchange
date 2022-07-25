@@ -7,7 +7,7 @@ public abstract class MessageProcessor implements MessageBusService {
     // Thread which will process messages
     private final Thread messageProcessor;
     // Marker if the engine is running or not
-    private volatile boolean running;
+    protected volatile boolean running;
 
     public MessageProcessor() {
         this.messageProcessor = new Thread(this::processMessages);
@@ -21,10 +21,6 @@ public abstract class MessageProcessor implements MessageBusService {
 
     public void stop() {
         running = false;
-    }
-
-    protected boolean isRunning() {
-        return running;
     }
 
     public abstract void processMessage(Message message);

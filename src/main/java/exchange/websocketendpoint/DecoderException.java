@@ -1,4 +1,4 @@
-package exchange.endpoint;
+package exchange.websocketendpoint;
 
 public class DecoderException extends RuntimeException {
 

@@ -32,8 +32,7 @@ public class OrderEntryGateway extends MessageProcessor {
         try {
             messages.put(message);
         } catch (InterruptedException e) {
-            LOG.fatal("Thread interrupted, aborting...");
-            LOG.fatal(e);
+            LOG.error("Thread interrupted, aborting...", e);
             stop();
         }
     }
@@ -41,7 +40,7 @@ public class OrderEntryGateway extends MessageProcessor {
     @Override
     protected void processMessages() {
         LOG.info("OrderEntryGateway up and running!");
-        while (isRunning()) {
+        while (running) {
             try {
                 Message message = messages.take();
                 LOG.info("Processing new {}", message);
@@ -55,8 +54,7 @@ public class OrderEntryGateway extends MessageProcessor {
                 else exchangeBus.sendMessage("ServerEndpoint_" + message.getSession(), message);
             }
             catch (InterruptedException e) {
-                LOG.fatal("OrderEntryGateway interrupted!");
-                LOG.fatal(e);
+                LOG.error("OrderEntryGateway interrupted!", e);
                 stop();
             }
         }

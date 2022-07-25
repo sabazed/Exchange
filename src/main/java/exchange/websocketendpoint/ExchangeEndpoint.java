@@ -1,4 +1,4 @@
-package exchange.endpoint;
+package exchange.websocketendpoint;
 
 import com.fasterxml.jackson.databind.exc.InvalidFormatException;
 import exchange.enums.Status;
@@ -30,8 +30,7 @@ public class ExchangeEndpoint extends Endpoint implements MessageBusService {
             session.getBasicRemote().sendObject(message);
             LOG.info("Sent session {} the message - {}", session.getId(), message);
         } catch (IOException | EncodeException e) {
-            LOG.error("Could not send session {} object {}!", session.getId(), message);
-            LOG.error(e);
+            LOG.error("Could not send session {} object {}!", session.getId(), message, e);
         }
     }
 
@@ -54,7 +53,7 @@ public class ExchangeEndpoint extends Endpoint implements MessageBusService {
                     processMessage(message);
                 }
                 else {
-                    exchangeBus.sendMessage("OrderEntryGateway_0", message);
+                    exchangeBus.sendMessage("OrderEntryGateway", message);
                 }
             }
         });
@@ -81,12 +80,10 @@ public class ExchangeEndpoint extends Endpoint implements MessageBusService {
             else {
                 processMessage(new Fail(Status.Quantity));
             }
-            LOG.error(t.getClass().getName() + " at session {}, disconnecting...", session.getId());
-            LOG.error(t.getCause());
+            LOG.error(t.getClass().getName() + " at session {}, disconnecting...", session.getId(), t.getCause());
         }
         else {
-            LOG.error(t.getClass().getName() + " at session {}, disconnecting...", session.getId());
-            LOG.error(t.getCause());
+            LOG.error(t.getClass().getName() + " at session {}, disconnecting...", session.getId(), t.getCause());
         }
         // TODO: Stop websocket from closing
     }
