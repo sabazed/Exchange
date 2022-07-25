@@ -6,13 +6,16 @@ import exchange.bus.ExchangeBus;
 import exchange.bus.MessageBus;
 import jakarta.servlet.ServletContextEvent;
 import jakarta.servlet.ServletContextListener;
-import jakarta.servlet.annotation.WebListener;
+import jakarta.websocket.DeploymentException;
+import jakarta.websocket.server.ServerContainer;
+import jakarta.websocket.server.ServerEndpointConfig;
 import org.apache.logging.log4j.Level;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.apache.logging.log4j.core.config.Configurator;
 
-@WebListener
+import java.util.List;
+
 public class ExchangeServletContextListener implements ServletContextListener {
 
     private static final Logger LOG = LogManager.getLogger(ExchangeServletContextListener.class);
@@ -23,6 +26,24 @@ public class ExchangeServletContextListener implements ServletContextListener {
 
     @Override
     public void contextInitialized(ServletContextEvent sce) {
+
+        sce.getServletContext().addListener(ExchangeRequestListener.class);
+        ServerContainer sc = (ServerContainer) sce.getServletContext().getAttribute("jakarta.websocket.server.ServerContainer");
+
+        try {
+            sc.addEndpoint(
+                ServerEndpointConfig.Builder
+                    .create(ExchangeEndpoint.class, "/order")
+                    .configurator(new ExchangeServerEndpointConfig())
+                    .encoders(List.of(MessageEncoder.class))
+                    .decoders(List.of(MessageDecoder.class))
+                    .build()
+            );
+        }
+        catch(DeploymentException e) {
+            LOG.error("Couldn't add endpoint to server container!");
+            LOG.error(e);
+        }
 
         // Configure the root logger
         Configurator.setLevel(LogManager.getRootLogger(), Level.ALL);

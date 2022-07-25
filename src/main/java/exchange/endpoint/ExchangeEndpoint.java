@@ -10,14 +10,12 @@ import exchange.bus.ExchangeBus;
 import exchange.bus.MessageBus;
 import jakarta.servlet.ServletContext;
 import jakarta.websocket.*;
-import jakarta.websocket.server.ServerEndpoint;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
 import java.io.IOException;
 
-@ServerEndpoint(value = "/order", encoders = MessageEncoder.class, decoders = MessageDecoder.class, configurator = ExchangeServerEndpointConfig.class)
-public class ExchangeEndpoint implements MessageBusService {
+public class ExchangeEndpoint extends Endpoint implements MessageBusService {
 
     private static final Logger LOG = LogManager.getLogger(OrderEntryGateway.class);
 
@@ -37,7 +35,7 @@ public class ExchangeEndpoint implements MessageBusService {
         }
     }
 
-    @OnOpen
+    @Override
     public void onOpen(Session session, EndpointConfig config) {
         LOG.info("New client connected with session {}", session.getId());
         this.session = session;
@@ -46,27 +44,30 @@ public class ExchangeEndpoint implements MessageBusService {
         // Get the exchange bus and register the endpoint
         this.exchangeBus = (ExchangeBus) ctx.getAttribute(MessageBus.class.getName());
         this.exchangeBus.registerService("ServerEndpoint_" + session.getId(), this);
+
+        session.addMessageHandler(new MessageHandler.Whole<Message>() {
+            @Override
+            public void onMessage(Message message) {
+                LOG.info("New response from session {}, data - {}", session.getId(), message);
+                message.setSession(session.getId());
+                if (message instanceof Fail) {
+                    processMessage(message);
+                }
+                else {
+                    exchangeBus.sendMessage("OrderEntryGateway_0", message);
+                }
+            }
+        });
+
     }
 
-    @OnMessage
-    public void onMessage(Session session, Message message) {
-        LOG.info("New response from session {}, data - {}", session.getId(), message);
-        message.setSession(session.getId());
-        if (message instanceof Fail) {
-            processMessage(message);
-        }
-        else {
-            exchangeBus.sendMessage("OrderEntryGateway_0", message);
-        }
-    }
-
-    @OnClose
-    public void onClose(Session session) {
+    @Override
+    public void onClose(Session session, CloseReason closeReason) {
         LOG.info("Client disconnected with session {}", session.getId());
         exchangeBus.unregisterService(session.getId());
     }
 
-    @OnError
+    @Override
     public void onError(Session session, Throwable t) {
         if (t.getCause() instanceof InvalidFormatException e) {
             // Check which is invalid - price or qty
@@ -80,6 +81,8 @@ public class ExchangeEndpoint implements MessageBusService {
             else {
                 processMessage(new Fail(Status.Quantity));
             }
+            LOG.error(t.getClass().getName() + " at session {}, disconnecting...", session.getId());
+            LOG.error(t.getCause());
         }
         else {
             LOG.error(t.getClass().getName() + " at session {}, disconnecting...", session.getId());

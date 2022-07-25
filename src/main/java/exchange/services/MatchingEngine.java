@@ -70,7 +70,6 @@ public class MatchingEngine extends MessageProcessor {
                     if (instr == null) {
                         message = new Fail(Status.CancelFail, cancel);
                         exchangeBus.sendMessage(gatewayId, message);
-                        System.out.println("INSTR");
                     }
                     else {
                         // Get the tree of the orders with the same side
@@ -79,12 +78,10 @@ public class MatchingEngine extends MessageProcessor {
                         if (!orders.remove(new Order(cancel))) {
                             message = new Fail(Status.CancelFail, cancel);
                             LOG.warn("Couldn't cancel current {}", cancel);
-                            System.out.println("REMOVE");
                         }
                         else message = new Remove(cancel);
                         // Send the message through the Response Bus
                         exchangeBus.sendMessage(gatewayId, message);
-                        System.out.println(orders.size() + " : " + cancel.getSide());
                     }
                 }
                 else if (message instanceof Order order){
@@ -136,23 +133,14 @@ public class MatchingEngine extends MessageProcessor {
                                 Iterator<Order> iterator = otherTree.iterator();
                                 Order matched = iterator.hasNext() ? iterator.next() : null;
                                 // Iterate over the orders if the users are the same
-                                if (matched != null) System.out.println(matched);
                                 while (iterator.hasNext() && matched.getUser().equals(order.getUser()))
                                     matched = iterator.next();
                                 // If the users are still same we assign matched as null, or consider two cases:
                                 // Case Sell: if matched price is higher or equal else matched = null
                                 // Case Buy: if matched price is lower or equal else matched = null
-                                if (matched != null)
-                                    System.out.println(matched.getUser() + " : " + order.getUser());
                                 if (matched != null && (matched.getUser().equals(order.getUser()) ||
                                     matched.getPrice().compareTo(order.getPrice()) * ((order.getSide() == Side.BUY) ? 1 : -1) > 0)
                                 ) matched = null;
-                                if (matched != null)
-                                    System.out.println(matched.getUser().equals(order.getUser()) ||
-                                        matched.getPrice().compareTo(order.getPrice()) * ((order.getSide() == Side.BUY) ? 1 : -1) > 0);
-                                System.out.println(matched);
-                                System.out.println(" > " + ownTree.size() + " : " + order.getSide());
-                                System.out.println(" > " + otherTree.size() + " OTHER");
                                 // If no match was found then add the order
                                 if (matched == null) {
                                     order.setGlobalId(ID++);
@@ -197,8 +185,6 @@ public class MatchingEngine extends MessageProcessor {
                             }
                         }
                     }
-                    System.out.println(ownTree.size() + " : " + order.getSide());
-                    System.out.println(otherTree.size() + " OTHER");
                 }
             }
             catch (InterruptedException e) {

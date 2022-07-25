@@ -2,10 +2,8 @@ package exchange.endpoint;
 
 import jakarta.servlet.ServletRequestEvent;
 import jakarta.servlet.ServletRequestListener;
-import jakarta.servlet.annotation.WebListener;
 import jakarta.servlet.http.HttpServletRequest;
 
-@WebListener
 public class ExchangeRequestListener implements ServletRequestListener {
 
     @Override
