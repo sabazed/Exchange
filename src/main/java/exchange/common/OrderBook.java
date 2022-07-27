@@ -1,7 +1,8 @@
 package exchange.common;
 
 import exchange.enums.Side;
-import exchange.messages.*;
+import exchange.messages.Message;
+import exchange.messages.Order;
 
 import java.util.HashMap;
 import java.util.Iterator;
@@ -44,7 +45,7 @@ public class OrderBook {
 
     public Order getFirstMatch(Order order) {
         // Get the best deal from the tree
-        Iterator<Order> iterator = (order.getSide() == Side.SELL) ? sellOrders.iterator() : buyOrders.iterator();
+        Iterator<Order> iterator = (order.getSide() == Side.SELL) ? buyOrders.iterator() : sellOrders.iterator();
         Order matched = iterator.hasNext() ? iterator.next() : null;
         // Iterate over the orders if the users are the same
         while (iterator.hasNext() && matched.getUser().equals(order.getUser())) {

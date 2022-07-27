@@ -1,6 +1,5 @@
 package exchange.messages;
 
-import exchange.enums.Side;
 import exchange.common.Instrument;
 
 public class Remove implements Message {

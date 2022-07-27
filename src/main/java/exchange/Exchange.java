@@ -1,9 +1,11 @@
 package exchange;
 
-import exchange.websocketendpoint.*;
+import exchange.websocketendpoint.ExchangeServletContextListener;
 import org.apache.catalina.Context;
 import org.apache.catalina.LifecycleException;
 import org.apache.catalina.startup.Tomcat;
+
+import java.io.File;
 
 public class Exchange {
 
@@ -11,13 +13,12 @@ public class Exchange {
 
         Tomcat tomcat = new Tomcat();
         tomcat.setPort(8080);
-        tomcat.getHost().setAppBase(".");
         tomcat.getConnector();
 
-        String contextPath = "/Exchange";
-        String warFilePath = System.getProperty("user.dir") + "\\out\\artifacts\\Exchange_main_war\\Exchange.main_war.war";
+        String ctxPath = "/Exchange";
+        String webappDir = new File("src/main/webapp").getAbsolutePath();
 
-        Context ctx = tomcat.addWebapp(contextPath, warFilePath);
+        Context ctx = tomcat.addWebapp(ctxPath, webappDir);
         ctx.addApplicationListener(ExchangeServletContextListener.class.getName());
 
         tomcat.start();

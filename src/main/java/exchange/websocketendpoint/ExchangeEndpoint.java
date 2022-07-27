@@ -1,15 +1,20 @@
 package exchange.websocketendpoint;
 
 import com.fasterxml.jackson.databind.exc.InvalidFormatException;
+import exchange.bus.ExchangeBus;
+import exchange.bus.MessageBus;
 import exchange.enums.Status;
 import exchange.messages.Fail;
 import exchange.messages.Message;
-import exchange.services.ReferenceDataProvider;
 import exchange.services.MessageBusService;
-import exchange.bus.ExchangeBus;
-import exchange.bus.MessageBus;
+import exchange.services.ReferenceDataProvider;
 import jakarta.servlet.ServletContext;
-import jakarta.websocket.*;
+import jakarta.websocket.CloseReason;
+import jakarta.websocket.EncodeException;
+import jakarta.websocket.Endpoint;
+import jakarta.websocket.EndpointConfig;
+import jakarta.websocket.MessageHandler;
+import jakarta.websocket.Session;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 

@@ -1,8 +1,8 @@
 package exchange.messages;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
-import exchange.enums.Side;
 import exchange.common.Instrument;
+import exchange.enums.Side;
 
 import java.math.BigDecimal;
 import java.time.Instant;

@@ -2,6 +2,7 @@ var orders = {};
 var order_id = 0;
 var request_id = 0;
 var wsocket = new WebSocket("ws://localhost:8080/Exchange/order");
+fadeElem("overlay"); // Hide the notification
 
 wsocket.onmessage = function (evt) {
     console.log(evt.data);
@@ -113,6 +114,10 @@ function addOrder(order) {
 function tradeOrder(trade) {
     event.preventDefault();
     let order = orders[trade.clientId];
+    if (order === undefined) {
+        tradeNotif(trade.clientId);
+        return;
+    }
     order.qty = trade.qty;
     if (order.qty > 0) {
         let color = order.side === "BUY" ? "green" : "red";
