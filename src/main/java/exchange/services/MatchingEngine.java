@@ -20,7 +20,7 @@ import java.util.concurrent.LinkedBlockingQueue;
 
 public class MatchingEngine extends MessageProcessor {
 
-    private final static Logger LOG = LogManager.getLogger(MatchingEngine.class);
+    private final static Logger LOG = LogManager.getLogger("exchangeLogger");
 
     // Use a LinkedBlockingQueue to receive new orders
     private final BlockingQueue<Message> newOrders;

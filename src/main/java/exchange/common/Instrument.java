@@ -1,14 +1,19 @@
 package exchange.common;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
+import jakarta.persistence.Entity;
+import jakarta.persistence.Id;
 
 import java.util.Objects;
 
+@Entity
 public class Instrument {
 
     private static int ID = 0;
 
-    private final Integer id;
+    @Id
+    private Integer id;
+
     private String name;
 
     public Instrument(String name) {
@@ -17,7 +22,7 @@ public class Instrument {
     }
 
     public Instrument() {
-        id = ID++;
+
     }
 
     @JsonIgnore

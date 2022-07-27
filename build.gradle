@@ -39,6 +39,9 @@ dependencies {
     implementation "org.apache.tomcat.embed:tomcat-embed-jasper:10.0.20"
     implementation "org.apache.tomcat.embed:tomcat-embed-websocket:10.0.20"
 
+    implementation "org.hibernate:hibernate-core:6.1.0.Final"
+    implementation "org.postgresql:postgresql:42.3.6"
+
 }
 
 test {

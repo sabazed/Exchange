@@ -10,7 +10,7 @@ import java.util.concurrent.ConcurrentMap;
 
 public class ExchangeBus implements MessageBus {
 
-    private final static Logger LOG = LogManager.getLogger(ExchangeBus.class);
+    private final static Logger LOG = LogManager.getLogger("exchangeLogger");
 
     private final ConcurrentMap<String, MessageBusService> services;
 

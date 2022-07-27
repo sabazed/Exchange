@@ -9,20 +9,19 @@ import jakarta.servlet.ServletContextListener;
 import jakarta.websocket.DeploymentException;
 import jakarta.websocket.server.ServerContainer;
 import jakarta.websocket.server.ServerEndpointConfig;
-import org.apache.logging.log4j.Level;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
-import org.apache.logging.log4j.core.config.Configurator;
 
 import java.util.List;
 
 public class ExchangeServletContextListener implements ServletContextListener {
 
-    private static final Logger LOG = LogManager.getLogger(ExchangeServletContextListener.class);
+    private static final Logger LOG = LogManager.getLogger("exchangeLogger");
 
     private MatchingEngine engine;
     private OrderEntryGateway gateway;
     private MessageBus exchangeBus;
+    private InstrumentLoader loader;
 
     @Override
     public void contextInitialized(ServletContextEvent sce) {
@@ -44,16 +43,13 @@ public class ExchangeServletContextListener implements ServletContextListener {
             LOG.error("Couldn't add endpoint to server container!", e);
         }
 
-        // Configure the root logger
-        Configurator.setLevel(LogManager.getRootLogger(), Level.ALL);
-
         // Initialize the Response Bus
-        LOG.info("Initializing a new Exchange Bus");
+        LOG.info("Initializing a new Exchange Bus...");
         exchangeBus = new ExchangeBus();
         // Create both service instances
-        LOG.info("Initializing a new Matching Engine");
+        LOG.info("Initializing a new Matching Engine...");
         engine = new MatchingEngine(exchangeBus, "OrderEntryGateway");
-        LOG.info("Initializing a new Order Entry Gateway");
+        LOG.info("Initializing a new Order Entry Gateway...");
         gateway = new OrderEntryGateway(exchangeBus, "MatchingEngine");
         // Register both instances
         exchangeBus.registerService("MatchingEngine", engine);
@@ -62,8 +58,13 @@ public class ExchangeServletContextListener implements ServletContextListener {
         engine.start();
         gateway.start();
 
-        // Add current listener object to Servlet Context attributes
+        // Initialize an instrument loader
+        LOG.info("Initializing InstrumentLoader...");
+        loader = new InstrumentLoader();
+
+        // Add current listener and instrument loader object to Servlet Context attributes
         sce.getServletContext().setAttribute(MessageBus.class.getName(), exchangeBus);
+        sce.getServletContext().setAttribute(InstrumentLoader.class.getName(), loader);
 
     }
 

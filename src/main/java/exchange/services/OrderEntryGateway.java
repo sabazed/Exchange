@@ -14,7 +14,7 @@ import java.util.concurrent.LinkedBlockingQueue;
 
 public class OrderEntryGateway extends MessageProcessor {
 
-    private static final Logger LOG = LogManager.getLogger(OrderEntryGateway.class);
+    private static final Logger LOG = LogManager.getLogger("exchangeLogger");
 
     private final BlockingQueue<Message> messages;
     private final MessageBus exchangeBus;
