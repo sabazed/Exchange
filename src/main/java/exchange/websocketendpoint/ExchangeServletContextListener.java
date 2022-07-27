@@ -1,5 +1,6 @@
 package exchange.websocketendpoint;
 
+import exchange.services.ReferenceDataProvider;
 import exchange.services.MatchingEngine;
 import exchange.services.OrderEntryGateway;
 import exchange.bus.ExchangeBus;
@@ -20,8 +21,8 @@ public class ExchangeServletContextListener implements ServletContextListener {
 
     private MatchingEngine engine;
     private OrderEntryGateway gateway;
+    private ReferenceDataProvider provider;
     private MessageBus exchangeBus;
-    private InstrumentLoader loader;
 
     @Override
     public void contextInitialized(ServletContextEvent sce) {
@@ -46,25 +47,25 @@ public class ExchangeServletContextListener implements ServletContextListener {
         // Initialize the Response Bus
         LOG.info("Initializing a new Exchange Bus...");
         exchangeBus = new ExchangeBus();
-        // Create both service instances
+        // Create all service instances
         LOG.info("Initializing a new Matching Engine...");
         engine = new MatchingEngine(exchangeBus, "OrderEntryGateway");
         LOG.info("Initializing a new Order Entry Gateway...");
-        gateway = new OrderEntryGateway(exchangeBus, "MatchingEngine");
-        // Register both instances
+        gateway = new OrderEntryGateway(exchangeBus, "MatchingEngine", "ReferenceDataProvider");
+        LOG.info("Initializing Reference Data Provider...");
+        provider = new ReferenceDataProvider(exchangeBus, "OrderEntryGateway");
+        // Register all instances
         exchangeBus.registerService("MatchingEngine", engine);
         exchangeBus.registerService("OrderEntryGateway", gateway);
+        exchangeBus.registerService("ReferenceDataProvider", provider);
         // Start the services
         engine.start();
         gateway.start();
+        provider.start();
 
-        // Initialize an instrument loader
-        LOG.info("Initializing InstrumentLoader...");
-        loader = new InstrumentLoader();
 
         // Add current listener and instrument loader object to Servlet Context attributes
         sce.getServletContext().setAttribute(MessageBus.class.getName(), exchangeBus);
-        sce.getServletContext().setAttribute(InstrumentLoader.class.getName(), loader);
 
     }
 
@@ -72,6 +73,7 @@ public class ExchangeServletContextListener implements ServletContextListener {
     public void contextDestroyed(ServletContextEvent sce){
         engine.stop();
         gateway.stop();
+        provider.stop();
     }
 
 }

@@ -1,19 +1,27 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <Configuration>
     <Appenders>
-        <Console name="Console" target="SYSTEM_OUT">
+        <Console name="ConsoleRoot" target="SYSTEM_OUT">
             <PatternLayout
                 disableAnsi="false"
                 pattern="%highlight{%d{HH:mm:ss.SSS} [%t] %-5level %logger{36} - %msg%n}{FATAL=red blink, ERROR=red, WARN=yellow, INFO=default, DEBUG=cyan, TRACE=white}"
+                logger="root"
+            />
+        </Console>
+        <Console name="ConsoleDefault" target="SYSTEM_OUT">
+            <PatternLayout
+                    disableAnsi="false"
+                    pattern="%highlight{%d{HH:mm:ss.SSS} [%t] %-5level %C{2} - %msg%n}{FATAL=red blink, ERROR=red, WARN=yellow, INFO=default, DEBUG=cyan, TRACE=white}"
+                    logger="root"
             />
         </Console>
     </Appenders>
     <Loggers>
         <Logger name="exchangeLogger" level="all" additivity="false">
-            <AppenderRef ref="Console"/>
+            <AppenderRef ref="ConsoleDefault"/>
         </Logger>
         <Root level="info">
-            <AppenderRef ref="Console"/>
+            <AppenderRef ref="ConsoleRoot"/>
         </Root>
     </Loggers>
 </Configuration>

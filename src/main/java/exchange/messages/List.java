@@ -82,7 +82,7 @@ public class List implements Message {
     public String toString() {
         return "List{" +
                 "user='" + user + '\'' +
-                ", instrument=" + instrument.getName() +
+                ", instrument=" + instrument.toString() +
                 ", side=" + side +
                 ", price=" + price +
                 ", qty=" + qty +

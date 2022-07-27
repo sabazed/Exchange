@@ -1,6 +1,6 @@
 package exchange.enums;
 
 public enum Status {
-    CancelFail, OrderFail,
+    CancelFail, OrderFail, RequestFail,
     Username, Instrument, Price, Quantity
 }

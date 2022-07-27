@@ -1,6 +1,5 @@
 package exchange.common;
 
-import com.fasterxml.jackson.annotation.JsonIgnore;
 import jakarta.persistence.Entity;
 import jakarta.persistence.Id;
 
@@ -9,23 +8,20 @@ import java.util.Objects;
 @Entity
 public class Instrument {
 
-    private static int ID = 0;
-
     @Id
     private Integer id;
 
     private String name;
 
-    public Instrument(String name) {
+    public Instrument(String name, Integer id) {
         this.name = name;
-        this.id = ID++;
+        this.id = id;
     }
 
     public Instrument() {
 
     }
 
-    @JsonIgnore
     public Integer getId() {
         return id;
     }
@@ -41,7 +37,11 @@ public class Instrument {
 
     @Override
     public int hashCode() {
-        return Objects.hash(name);
+        return Objects.hash(id);
     }
 
+    @Override
+    public String toString() {
+        return "{id=" + id + ", name='" + name + "'}";
+    }
 }

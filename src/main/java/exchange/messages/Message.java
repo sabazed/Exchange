@@ -10,7 +10,8 @@ import com.fasterxml.jackson.annotation.JsonTypeInfo;
         property = "type")
 @JsonSubTypes({
         @Type(value = Order.class, name = "Order"),
-        @Type(value = Cancel.class, name = "Cancel")
+        @Type(value = Cancel.class, name = "Cancel"),
+        @Type(value = Request.class, name = "Request")
 })
 public interface Message {
 

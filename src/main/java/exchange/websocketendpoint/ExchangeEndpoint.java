@@ -1,12 +1,11 @@
 package exchange.websocketendpoint;
 
 import com.fasterxml.jackson.databind.exc.InvalidFormatException;
-import exchange.common.Instrument;
 import exchange.enums.Status;
 import exchange.messages.Fail;
 import exchange.messages.Message;
+import exchange.services.ReferenceDataProvider;
 import exchange.services.MessageBusService;
-import exchange.services.OrderEntryGateway;
 import exchange.bus.ExchangeBus;
 import exchange.bus.MessageBus;
 import jakarta.servlet.ServletContext;
@@ -15,7 +14,6 @@ import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
 import java.io.IOException;
-import java.util.List;
 
 public class ExchangeEndpoint extends Endpoint implements MessageBusService {
 
@@ -24,7 +22,7 @@ public class ExchangeEndpoint extends Endpoint implements MessageBusService {
     // Exchange message bus for communication
     private ExchangeBus exchangeBus;
     // Instrument loader for sending current instrument data to the websocket
-    private InstrumentLoader loader;
+    private ReferenceDataProvider loader;
     // Session of the current endpoint
     private Session session;
 
@@ -44,8 +42,8 @@ public class ExchangeEndpoint extends Endpoint implements MessageBusService {
         this.session = session;
         // Get the servlet context through custom config with added user attribute
         ServletContext ctx = (ServletContext) config.getUserProperties().get(ServletContext.class.getName());
-        // Get InstrumentLoader from saved attributes
-        this.loader = (InstrumentLoader) ctx.getAttribute(InstrumentLoader.class.getName());
+        // Get ReferenceDataProvider from saved attributes
+        this.loader = (ReferenceDataProvider) ctx.getAttribute(ReferenceDataProvider.class.getName());
         // Get the exchange bus and register the endpoint
         this.exchangeBus = (ExchangeBus) ctx.getAttribute(MessageBus.class.getName());
         this.exchangeBus.registerService("ServerEndpoint_" + session.getId(), this);

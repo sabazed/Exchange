@@ -43,7 +43,7 @@ public class Cancel implements Message {
     public String toString() {
         return "Cancel{" +
                 "session='" + session + '\'' +
-                ", instrument='" + instrument.getName() +
+                ", instrument='" + instrument.toString() +
                 ", side=" + side +
                 ", clientId='" + clientId + '\'' +
                 ", globalId=" + globalId +

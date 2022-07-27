@@ -86,7 +86,7 @@ public class Order implements Message {
     @Override
     public String toString() {
         return "Order{user='" + user + '\'' +
-                ", instrument=" + instrument.getName() +
+                ", instrument=" + instrument.toString() +
                 ", side=" + side +
                 ", price=" + price +
                 ", clientId='" + clientId + '\'' +

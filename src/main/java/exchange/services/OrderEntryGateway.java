@@ -2,10 +2,7 @@ package exchange.services;
 
 import exchange.bus.MessageBus;
 import exchange.enums.Status;
-import exchange.messages.Cancel;
-import exchange.messages.Fail;
-import exchange.messages.Message;
-import exchange.messages.Order;
+import exchange.messages.*;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
@@ -19,12 +16,14 @@ public class OrderEntryGateway extends MessageProcessor {
     private final BlockingQueue<Message> messages;
     private final MessageBus exchangeBus;
     private final String engineId;
+    private final String providerId;
 
-    public OrderEntryGateway(MessageBus messageBus, String serviceId) {
+    public OrderEntryGateway(MessageBus messageBus, String engineId, String providerId) {
         super();
         messages = new LinkedBlockingQueue<>();
         exchangeBus = messageBus;
-        engineId = serviceId;
+        this.engineId = engineId;
+        this.providerId = providerId;
     }
 
     @Override
@@ -50,6 +49,9 @@ public class OrderEntryGateway extends MessageProcessor {
                 // Determine where to send the message, back to the endpoint or to the engine
                 if (message instanceof Order || message instanceof Cancel) {
                     exchangeBus.sendMessage(engineId, message);
+                }
+                else if (message instanceof Request) {
+                    exchangeBus.sendMessage(providerId, message);
                 }
                 else exchangeBus.sendMessage("ServerEndpoint_" + message.getSession(), message);
             }

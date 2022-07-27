@@ -118,6 +118,9 @@ select {
     line-break: strict;
 }
 
+#instrument {
+    width: 227px;
+}
 ::-webkit-scrollbar {
     width: 10px;
 }

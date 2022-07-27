@@ -36,7 +36,6 @@ public class MatchingEngine extends MessageProcessor {
 
 
     public MatchingEngine(MessageBus messageBus, String serviceID) {
-
         newOrders = new LinkedBlockingQueue<>();
         orderBooks = new HashMap<>();
         exchangeBus = messageBus;
@@ -114,7 +113,7 @@ public class MatchingEngine extends MessageProcessor {
                             message = new Fail(Status.Username, message);
                             invalid = true;
                         }
-                        else if (order.getInstrument() == null || order.getInstrument().getName() == null || order.getInstrument().getName().isBlank()) {
+                        else if (order.getInstrument() == null) {
                             message = new Fail(Status.Instrument, message);
                             invalid = true;
                         }

@@ -1,5 +1,6 @@
 var orders = {};
-var cid = 0;
+var order_id = 0;
+var request_id = 0;
 var wsocket = new WebSocket("ws://localhost:8080/Exchange/order");
 
 wsocket.onmessage = function (evt) {
@@ -21,17 +22,26 @@ wsocket.onmessage = function (evt) {
         else if (data.status === "CancelFail") {
             cancelError(data);
         }
+        else if (data.status === "RequestFail") {
+            requestError();
+            wsocket.close();
+        }
         else {
             showError(data.status);
         }
     }
+    else if (data.type === "Response") {
+        loadInstruments(data.instruments);
+    }
 }
 
-// wsocket.onopen = function (evt) {
-//     for (let order in Object.values(orders)) {
-//         addOrder(order);
-//     }
-// }
+wsocket.onopen = function (evt) {
+    let json = {};
+    json.type = "Request";
+    json.clientId = request_id++;
+    console.log(json);
+    wsocket.send(JSON.stringify(json));
+}
 
 // function login() {
 //     let user = document.getElementById("username").value;
@@ -50,16 +60,25 @@ wsocket.onmessage = function (evt) {
 //     }
 // }
 
+function loadInstruments(instruments) {
+    for (let instrument of instruments) {
+        document.getElementById("instrument").innerHTML += `<option value=${instrument.id}>${instrument.name}</option>`;
+    }
+}
+
 function sendOrder() {
     event.preventDefault();
     let json = {};
     json.type = "Order";
     json.user = document.getElementById("user").value.trim();
-    json.instrument = document.getElementById("instrument").value.trim();
     json.side = document.getElementById("side").value;
     json.price = document.getElementById("price").value.trim();
     json.qty = document.getElementById("qty").value.trim();
-    json.clientId = cid++;
+    json.clientId = order_id++;
+    let menu = document.getElementById("instrument");
+    json.instrument = {};
+    json.instrument.id = menu.value;
+    json.instrument.name = menu.options[menu.selectedIndex].text;
     console.log(json);
     wsocket.send(JSON.stringify(json));
     document.getElementById("invalid-data").innerText = "";
@@ -141,6 +160,12 @@ function cancelError(order) {
 
 function orderError() {
     document.getElementById("notiftext").innerText = `There was a problem sending your order!`;
+    document.getElementById("overlay").className = "error";
+    document.getElementById("overlay").classList.remove("invisible");
+}
+
+function requestError() {
+    document.getElementById("notiftext").innerText = `There was a problem connecting to the server disconnecting!`;
     document.getElementById("overlay").className = "error";
     document.getElementById("overlay").classList.remove("invisible");
 }
