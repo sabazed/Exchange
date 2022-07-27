@@ -91,7 +91,6 @@ function sendRemove(bid) {
     let json = {};
     json.type = "Cancel";
     json.instrument = orders[arr[1]].instrument;
-    json.side = orders[arr[1]].side;
     json.clientId = orders[arr[1]].clientId;
     json.globalId = orders[arr[1]].globalId;
     console.log(json);

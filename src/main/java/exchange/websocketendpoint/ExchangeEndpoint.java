@@ -50,8 +50,8 @@ public class ExchangeEndpoint extends Endpoint implements MessageBusService {
         session.addMessageHandler(new MessageHandler.Whole<Message>() {
             @Override
             public void onMessage(Message message) {
-                LOG.info("New response from session {}, data - {}", session.getId(), message);
                 message.setSession(session.getId());
+                LOG.info("New response from session {}, data - {}", session.getId(), message);
                 if (message instanceof Fail) {
                     processMessage(message);
                 }

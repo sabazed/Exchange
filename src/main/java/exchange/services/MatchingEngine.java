@@ -3,7 +3,6 @@ package exchange.services;
 import exchange.bus.MessageBus;
 import exchange.common.Instrument;
 import exchange.common.OrderBook;
-import exchange.enums.Side;
 import exchange.enums.Status;
 import exchange.messages.*;
 import org.apache.logging.log4j.LogManager;
@@ -12,9 +11,6 @@ import org.apache.logging.log4j.Logger;
 import java.math.BigDecimal;
 import java.time.Instant;
 import java.util.HashMap;
-import java.util.Iterator;
-import java.util.Map;
-import java.util.TreeSet;
 import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.LinkedBlockingQueue;
 
@@ -53,6 +49,81 @@ public class MatchingEngine extends MessageProcessor {
         }
     }
 
+    private void registerOrder(Order order) {
+        order.setGlobalId(ID++);
+        order.setInstant(Instant.now());
+    }
+
+    private Status validateMessage(Order order) {
+        if (order.getSide() == null || order.getSession() == null || order.getClientId() == null || order.getClientId().isBlank()) {
+            return Status.OrderFail;
+        } else if (order.getUser() == null || order.getUser().isBlank()) {
+            return Status.Username;
+        } else if (order.getInstrument() == null) {
+            return Status.Instrument;
+        } else if (order.getPrice() == null || order.getPrice().compareTo(BigDecimal.ZERO) <= 0) {
+            return Status.Price;
+        } else if (order.getQty() == null || order.getQty().compareTo(BigDecimal.ZERO) <= 0) {
+            return Status.Quantity;
+        } else {
+            return null;
+        }
+    }
+
+    private void addOrder(Order order, OrderBook orderBook) {
+        registerOrder(order);
+        if (orderBook.addOrder(order)) {
+            LOG.info("Listing message successful! - {}", order);
+            exchangeBus.sendMessage(gatewayId, new List(order));
+        }
+        else {
+            LOG.warn("Listing message unsuccessful! - {}", order);
+            ID--;
+            exchangeBus.sendMessage(gatewayId, new Fail(Status.OrderFail, order));
+        }
+    }
+
+    private void cancelOrder(Cancel cancel) {
+        // Check if the instrument exists in the order book and if not, the cancel is invalid
+        OrderBook orderBook = orderBooks.get(cancel.getInstrument());
+        if (orderBook == null || !orderBook.removeOrder(cancel)) {
+            LOG.warn("Couldn't cancel current {}", cancel);
+            exchangeBus.sendMessage(gatewayId, new Fail(Status.CancelFail, cancel));
+        }
+        else {
+            LOG.info("Cancelled order {}", cancel);
+            exchangeBus.sendMessage(gatewayId, new Remove(cancel));
+        }
+    }
+
+    private boolean matchOrder(Order matched, Order order, OrderBook orderBook) {
+        boolean repeatMatching = false;
+        // If currently matched order has more quantity, then mark our message as traded
+        if (matched.getQty().compareTo(order.getQty()) > 0) {
+            registerOrder(order);
+            matched.tradeWith(order);
+            exchangeBus.sendMessage(gatewayId, new Trade(order));
+            LOG.info("Matching successfully finished for {}", order);
+        }
+        else {
+            orderBook.removeOrder(matched);
+            order.tradeWith(matched);
+            matched.setQty(BigDecimal.ZERO);
+            // If the order has 0 qty then send it as traded
+            if (order.getQty().compareTo(BigDecimal.ZERO) <= 0) {
+                // Send trade signal for the matched order
+                exchangeBus.sendMessage(gatewayId, new Trade(order));
+                LOG.info("Order {} traded - {}", order.getGlobalId(), order);
+            }
+            // If qty is more than 0 then continue iteration
+            else repeatMatching = true;
+        }
+        // Send trade for the matched order
+        exchangeBus.sendMessage(gatewayId, new Trade(matched));
+        LOG.info("Order {} traded - {}", matched.getGlobalId(), matched);
+        return repeatMatching;
+    }
+
     @Override
     protected void processMessages() {
         LOG.info("MatchingEngine up and running!");
@@ -64,132 +135,35 @@ public class MatchingEngine extends MessageProcessor {
                 LOG.info("Processing new {}", message);
                 // Check if the message has Cancel status to remove the order
                 if (message instanceof Cancel cancel) {
-                    // Check if the instrument exists in the order book and if not, the cancel is invalid
-                    OrderBook instr = orderBooks.get(cancel.getInstrument());
-                    if (instr == null) {
-                        message = new Fail(Status.CancelFail, cancel);
-                        exchangeBus.sendMessage(gatewayId, message);
-                    }
-                    else {
-                        // Get the tree of the orders with the same side
-                        TreeSet<Order> orders = (cancel.getSide() == Side.SELL) ? instr.getSellOrders() : instr.getBuyOrders();
-                        Map<Long, Order> orderMap = (cancel.getSide() == Side.SELL) ? instr.getSellOrderMap() : instr.getBuyOrderMap();
-                        // Check if the map contains the order
-                        Order order = orderMap.remove(cancel.getGlobalId());
-                        if (order != null) {
-                            // If removal couldn't be done change the status to CancelFail
-                            if (!orders.remove(order)) {
-                                message = new Fail(Status.CancelFail, cancel);
-                                LOG.warn("Couldn't cancel current {}", cancel);
-                            } else message = new Remove(cancel);
-                        }
-                        else message = new Fail(Status.CancelFail, cancel);
-                        // Send the message through the Response Bus
-                        exchangeBus.sendMessage(gatewayId, message);
-                    }
+                    cancelOrder(cancel);
                 }
-                else if (message instanceof Order order){
+                else if (message instanceof Order order) {
                     // Check if the instrument exists in the order book and if not, add it
-                    OrderBook instr = orderBooks.get(order.getInstrument());
-                    if (instr == null) {
+                    OrderBook orderBook = orderBooks.get(order.getInstrument());
+                    if (orderBook == null) {
                         orderBooks.put(order.getInstrument(), new OrderBook(order.getInstrument()));
-                        instr = orderBooks.get(order.getInstrument());
+                        orderBook = orderBooks.get(order.getInstrument());
                     }
-                    // Save trees of both sides as the message's own side tree and opposite tree
-                    TreeSet<Order> ownTree = order.getSide() == Side.SELL ? instr.getSellOrders() : instr.getBuyOrders();
-                    TreeSet<Order> otherTree = order.getSide() == Side.SELL ? instr.getBuyOrders() : instr.getSellOrders();
-                    Map<Long, Order> ownMap = order.getSide() == Side.SELL ? instr.getSellOrderMap() : instr.getBuyOrderMap();
-                    Map<Long, Order> otherMap = order.getSide() == Side.SELL ? instr.getBuyOrderMap() : instr.getSellOrderMap();
                     // Check if all data are valid and if not, skip the iteration and send the error message
-                    if (order.getSide() == null || order.getSession() == null || order.getClientId() == null || order.getClientId().isBlank()) {
-                        message = new Fail(Status.OrderFail, message);
-                        exchangeBus.sendMessage(gatewayId, message);
-                        LOG.warn("Invalid data in {}", message);
+                    Status invalidStatus = validateMessage(order);
+                    if (invalidStatus != null) {
+                        if (invalidStatus == Status.OrderFail) LOG.warn("Invalid data in {}", message);
+                        else LOG.info("Invalid user input in {}", message);
+                        exchangeBus.sendMessage(gatewayId, new Fail(invalidStatus, message));
                     }
                     else {
-                        boolean invalid = false;
-                        // Check all fields for errors
-                        if (order.getUser() == null || order.getUser().isBlank()) {
-                            message = new Fail(Status.Username, message);
-                            invalid = true;
-                        }
-                        else if (order.getInstrument() == null) {
-                            message = new Fail(Status.Instrument, message);
-                            invalid = true;
-                        }
-                        else if (order.getPrice() == null || order.getPrice().compareTo(BigDecimal.ZERO) <= 0) {
-                            message = new Fail(Status.Price, message);
-                            invalid = true;
-                        }
-                        else if (order.getQty() == null || order.getQty().compareTo(BigDecimal.ZERO) <= 0) {
-                            message = new Fail(Status.Quantity, message);
-                            invalid = true;
-                        }
-                        // If any error exists then log the field and send the message, otherwise continue the loop
-                        if (invalid) {
-                            exchangeBus.sendMessage(gatewayId, message);
-                            LOG.info("Invalid user input field in {}", message);
-                        }
-                        else {
-                            // Loop until all available orders are exchanged
-                            boolean repeatMatching = true;
-                            while (repeatMatching) {
-                                repeatMatching = false;
-                                // Get the best deal from the tree
-                                Iterator<Order> iterator = otherTree.iterator();
-                                Order matched = iterator.hasNext() ? iterator.next() : null;
-                                // Iterate over the orders if the users are the same
-                                while (iterator.hasNext() && matched.getUser().equals(order.getUser()))
-                                    matched = iterator.next();
-                                // If the users are still same we assign matched as null, or consider two cases:
-                                // Case Sell: if matched price is higher or equal else matched = null
-                                // Case Buy: if matched price is lower or equal else matched = null
-                                if (matched != null && (matched.getUser().equals(order.getUser()) ||
-                                    matched.getPrice().compareTo(order.getPrice()) * ((order.getSide() == Side.BUY) ? 1 : -1) > 0)
-                                ) matched = null;
-                                // If no match was found then add the order
-                                if (matched == null) {
-                                    order.setGlobalId(ID++);
-                                    order.setInstant(Instant.now());
-                                    // If there was a problem while adding then change status flag to OrderFail and decrease ID counter
-                                    if (!ownTree.add(order)) {
-                                        message = new Fail(Status.OrderFail, message);
-                                        ID--;
-                                        LOG.warn("Listing message unsuccessful! - {}", message);
-                                    }
-                                    else {
-                                        ownMap.put(order.getGlobalId(), order);
-                                        message = new List(order);
-                                        LOG.info("Listing message successful! - {}", message);
-                                    }
-                                    exchangeBus.sendMessage(gatewayId, message);
-                                } else {
-                                    // If currently matched order has more quantity then mark our message as traded
-                                    if (matched.getQty().compareTo(order.getQty()) > 0) {
-                                        matched.setQty(matched.getQty().subtract(order.getQty()));
-                                        order.setGlobalId(ID++);
-                                        order.setInstant(Instant.now());
-                                        message = new Trade(order);
-                                        exchangeBus.sendMessage(gatewayId, message);
-                                        LOG.info("Listing message successful after trading - {}", message);
-                                    } else {
-                                        order.setQty(order.getQty().subtract(matched.getQty()));
-                                        otherTree.remove(matched);
-                                        otherMap.remove(matched.getGlobalId());
-                                        matched.setQty(BigDecimal.ZERO);
-                                        // If the order ran out of remaining qty then mark it as traded and send the message
-                                        if (order.getQty().compareTo(BigDecimal.ZERO) <= 0) {
-                                            message = new Trade(order);
-                                            exchangeBus.sendMessage(gatewayId, message);
-                                            LOG.info("Traded successfully - {}", message);
-                                        }
-                                        // If qty is more than 0 then continue iteration
-                                        else repeatMatching = true;
-                                    }
-                                    // Send trade signal for the matched order
-                                    exchangeBus.sendMessage(gatewayId, new Trade(matched));
-                                    LOG.info("Order {} traded - {}", matched.getGlobalId(), matched);
-                                }
+                        // Loop until all available orders are exchanged
+                        boolean repeatMatching = true;
+                        while (repeatMatching) {
+                            repeatMatching = false;
+                            Order matched = orderBook.getFirstMatch(order);
+                            // If no match was found then add the order
+                            if (matched == null) {
+                                addOrder(order, orderBook);
+                            }
+                            else {
+                                // Process trade between matched and order
+                                repeatMatching = matchOrder(matched, order, orderBook);
                             }
                         }
                     }

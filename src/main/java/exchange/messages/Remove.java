@@ -7,14 +7,12 @@ public class Remove implements Message {
 
     private String session;
     private Instrument instrument;
-    private Side side;
     private String clientId;
     private long globalId;
 
     public Remove(Cancel cancel) {
         session = cancel.getSession();
         instrument = cancel.getInstrument();
-        side = cancel.getSide();
         clientId = cancel.getClientId();
         globalId = cancel.getGlobalId();
     }
@@ -33,10 +31,6 @@ public class Remove implements Message {
         return instrument;
     }
 
-    public Side getSide() {
-        return side;
-    }
-
     @Override
     public String getClientId() {
         return clientId;
@@ -52,7 +46,6 @@ public class Remove implements Message {
         return "Remove{" +
                 "session='" + session + '\'' +
                 ", instrument=" + instrument.toString() +
-                ", side=" + side +
                 ", clientId='" + clientId + '\'' +
                 ", globalId=" + globalId +
                 '}';

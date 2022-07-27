@@ -34,8 +34,8 @@ public class ExchangeBus implements MessageBus {
     public void sendMessage(String serviceId, Message message) {
         MessageBusService service = services.get(serviceId);
         if (service != null) {
+            LOG.info("Sending service {} a new message {}", serviceId, message);
             service.processMessage(message);
-            LOG.info("Sent service {} a new message {}", serviceId, message);
         }
         else {
             LOG.warn("Couldn't find registered service with id {} from {}", serviceId, message);

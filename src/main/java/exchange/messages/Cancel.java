@@ -1,13 +1,11 @@
 package exchange.messages;
 
-import exchange.enums.Side;
 import exchange.common.Instrument;
 
 public class Cancel implements Message {
 
     private String session;
     private Instrument instrument;
-    private Side side;
     private String clientId;
     private long globalId;
 
@@ -25,10 +23,6 @@ public class Cancel implements Message {
         return instrument;
     }
 
-    public Side getSide() {
-        return side;
-    }
-
     @Override
     public String getClientId() {
         return clientId;
@@ -44,7 +38,6 @@ public class Cancel implements Message {
         return "Cancel{" +
                 "session='" + session + '\'' +
                 ", instrument='" + instrument.toString() +
-                ", side=" + side +
                 ", clientId='" + clientId + '\'' +
                 ", globalId=" + globalId +
                 '}';
