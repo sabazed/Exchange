@@ -1,0 +1,10 @@
+{
+  "endpointId": "ServerEndpoint_",
+  "engineId": "Engine",
+  "gatewayId": "Gateway",
+  "providerId": "Provider",
+  "engineName": "exchange.services.MatchingEngine",
+  "gatewayName": "exchange.services.OrderEntryGateway",
+  "providerName": "exchange.services.ReferenceDataProvider",
+  "busName": "exchange.bus.ExchangeBus"
+}

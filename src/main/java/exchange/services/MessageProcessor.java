@@ -23,6 +23,8 @@ public abstract class MessageProcessor implements MessageBusService {
         running = false;
     }
 
+    public abstract String getSelfId();
+
     public abstract void processMessage(Message message);
 
     protected abstract void processMessages();

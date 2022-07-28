@@ -29,12 +29,19 @@ public class ReferenceDataProvider extends MessageProcessor {
     private final MessageBus exchangeBus;
     // Gateway ID for bus
     private final String gatewayId;
+    // Service ID for this instance
+    private final String selfId;
 
-    public ReferenceDataProvider(MessageBus messageBus, String serviceID) {
+    public ReferenceDataProvider(MessageBus messageBus, String gatewayId, String selfId) {
         manager = Persistence.createEntityManagerFactory("instrumentUnit").createEntityManager();
         requests = new LinkedBlockingQueue<>();
         exchangeBus = messageBus;
-        gatewayId = serviceID;
+        this.gatewayId = gatewayId;
+        this.selfId = selfId;
+    }
+
+    public String getSelfId() {
+        return selfId;
     }
 
     private List<Instrument> getInstruments() {

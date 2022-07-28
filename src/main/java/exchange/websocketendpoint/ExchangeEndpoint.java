@@ -30,6 +30,9 @@ public class ExchangeEndpoint extends Endpoint implements MessageBusService {
     private ReferenceDataProvider loader;
     // Session of the current endpoint
     private Session session;
+    // Service IDs
+    private String selfId;
+    private String gatewayId;
 
     // Method for sending a Message to the remote endpoint
     public void processMessage(Message message) {
@@ -43,15 +46,24 @@ public class ExchangeEndpoint extends Endpoint implements MessageBusService {
 
     @Override
     public void onOpen(Session session, EndpointConfig config) {
+
         LOG.info("New client connected with session {}", session.getId());
         this.session = session;
+
         // Get the servlet context through custom config with added user attribute
         ServletContext ctx = (ServletContext) config.getUserProperties().get(ServletContext.class.getName());
+
         // Get ReferenceDataProvider from saved attributes
         this.loader = (ReferenceDataProvider) ctx.getAttribute(ReferenceDataProvider.class.getName());
+
+        // Get service IDs from the context attributes
+        this.gatewayId = (String) ctx.getAttribute("GatewayId");
+        this.selfId = (String) ctx.getAttribute("EndpointId");
+
         // Get the exchange bus and register the endpoint
         this.exchangeBus = (ExchangeBus) ctx.getAttribute(MessageBus.class.getName());
-        this.exchangeBus.registerService("ServerEndpoint_" + session.getId(), this);
+        this.exchangeBus.registerService(selfId + session.getId(), this);
+
         session.addMessageHandler(new MessageHandler.Whole<Message>() {
             @Override
             public void onMessage(Message message) {
@@ -61,16 +73,17 @@ public class ExchangeEndpoint extends Endpoint implements MessageBusService {
                     processMessage(message);
                 }
                 else {
-                    exchangeBus.sendMessage("OrderEntryGateway", message);
+                    exchangeBus.sendMessage(gatewayId, message);
                 }
             }
         });
+
     }
 
     @Override
     public void onClose(Session session, CloseReason closeReason) {
         LOG.info("Client disconnected with session {}", session.getId());
-        exchangeBus.unregisterService(session.getId());
+        exchangeBus.unregisterService(selfId + session.getId());
     }
 
     @Override

@@ -32,16 +32,24 @@ public class MatchingEngine extends MessageProcessor {
     private final MessageBus exchangeBus;
     // Gateway ID for bus
     private final String gatewayId;
+    // Service ID for this instance
+    private final String selfId;
 
     // Keep count of orders to give them unique IDs
     private static long ID = 0;
 
 
-    public MatchingEngine(MessageBus messageBus, String serviceID) {
+    public MatchingEngine(MessageBus messageBus, String gatewayId, String selfId) {
         newOrders = new LinkedBlockingQueue<>();
         orderBooks = new HashMap<>();
         exchangeBus = messageBus;
-        gatewayId = serviceID;
+        this.gatewayId = gatewayId;
+        this.selfId = selfId;
+    }
+
+    @Override
+    public String getSelfId() {
+        return selfId;
     }
 
     @Override

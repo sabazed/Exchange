@@ -19,15 +19,23 @@ public class OrderEntryGateway extends MessageProcessor {
 
     private final BlockingQueue<Message> messages;
     private final MessageBus exchangeBus;
+    private final String endpointId;
     private final String engineId;
     private final String providerId;
+    private final String selfId;
 
-    public OrderEntryGateway(MessageBus messageBus, String engineId, String providerId) {
+    public OrderEntryGateway(MessageBus messageBus, String engineId, String providerId, String endpointId, String selfId) {
         super();
         messages = new LinkedBlockingQueue<>();
         exchangeBus = messageBus;
+        this.endpointId = endpointId;
         this.engineId = engineId;
         this.providerId = providerId;
+        this.selfId = selfId;
+    }
+
+    public String getSelfId() {
+        return selfId;
     }
 
     @Override
@@ -57,7 +65,7 @@ public class OrderEntryGateway extends MessageProcessor {
                 else if (message instanceof Request) {
                     exchangeBus.sendMessage(providerId, message);
                 }
-                else exchangeBus.sendMessage("ServerEndpoint_" + message.getSession(), message);
+                else exchangeBus.sendMessage(endpointId + message.getSession(), message);
             }
             catch (InterruptedException e) {
                 LOG.error("OrderEntryGateway interrupted!", e);
