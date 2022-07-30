@@ -2,9 +2,11 @@
   "endpointId": "ServerEndpoint_",
   "engineId": "Engine",
   "gatewayId": "Gateway",
-  "providerId": "Provider",
+  "marketProviderId": "MarketProvider",
+  "referenceProviderId": "ReferenceProvider",
   "engineName": "exchange.services.MatchingEngine",
   "gatewayName": "exchange.services.OrderEntryGateway",
-  "providerName": "exchange.services.ReferenceDataProvider",
+  "marketProviderName": "exchange.services.MarketDataProvider",
+  "referenceProviderName": "exchange.services.ReferenceDataProvider",
   "busName": "exchange.bus.ExchangeBus"
 }

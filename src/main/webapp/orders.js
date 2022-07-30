@@ -1,38 +1,42 @@
-var orders = {};
-var order_id = 0;
-var request_id = 0;
-var wsocket = new WebSocket("ws://localhost:8080/Exchange/order");
+let orders = {};
+let order_id = 0;
+let request_id = 0;
+let loaded = false;
+let wsocket = new WebSocket("ws://localhost:8080/Exchange/order");
 fadeElem("overlay"); // Hide the notification
 
 wsocket.onmessage = function (evt) {
     console.log(evt.data);
-    let data = JSON.parse(evt.data);
-    if (data.type === "List") {
-        addOrder(data);
+    let json = JSON.parse(evt.data);
+    if (json.type === "Listing") {
+        addOrder(json);
     }
-    else if (data.type === "Trade") {
-        tradeOrder(data);
+    else if (json.type === "Trade") {
+        tradeOrder(json);
     }
-    else if (data.type === "Remove") {
-        removeOrder(data.clientId);
+    else if (json.type === "Remove") {
+        removeOrder(json.clientId);
     }
-    else if (data.type === "Fail") {
-        if (data.status === "OrderFail") {
-            orderError(data);
+    else if (json.type === "Fail") {
+        if (json.status === "OrderFail") {
+            orderError(json);
         }
-        else if (data.status === "CancelFail") {
-            cancelError(data);
+        else if (json.status === "CancelFail") {
+            cancelError(json);
         }
-        else if (data.status === "RequestFail") {
+        else if (json.status === "RequestFail") {
             requestError();
             wsocket.close();
         }
         else {
-            showError(data.status);
+            showError(json.status);
         }
     }
-    else if (data.type === "Response") {
-        loadInstruments(data.instruments);
+    else if (json.type === "InstrumentData") {
+            loadInstruments(json.instruments);
+    }
+    else if (json.type === "MarketData") {
+            updateMarketData(json.updates);
     }
 }
 
@@ -62,8 +66,23 @@ wsocket.onopen = function (evt) {
 // }
 
 function loadInstruments(instruments) {
+    let instrumentSelect = document.getElementById("instrument");
+    let marketData = document.getElementById("market-field");
     for (let instrument of instruments) {
-        document.getElementById("instrument").innerHTML += `<option value=${instrument.id}>${instrument.name}</option>`;
+        instrumentSelect.innerHTML += `<option value=${instrument.id}>${instrument.name}</option>`;
+        marketData.innerHTML +=
+            `            <div class=\"market-entry\" id=\"$instrument{instrument.id}\">` +
+            `                <p>Instrument ${instrument.id}:` +
+            `                    <br>${instrument.name}<br>` +
+            `                    <span id="instrument${instrument.id}-price">Buy: 0<br>Sell: 0</span>` +
+            `                </p>` +
+            `            </div>`;
+    }
+}
+
+function updateMarketData(entries) {
+    for (let entry of entries) {
+        document.getElementById(`instrument${entry.instrument.id}-price`).innerHTML = `Buy: ${entry.buy}<br>Sell: ${entry.sell}`;
     }
 }
 
@@ -103,8 +122,8 @@ function addOrder(order) {
     orders[order.clientId] = order;
     let color = order.side === "BUY" ? "green" : "red";
     let newdiv =
-        `                <div class=\"entry\" id="${order.clientId}">\n` +
-        `                    <button type=\"submit\" class=\"cancel\" id=\"${order.user}-${order.clientId}" onclick="sendRemove(this.id)">x</button>\n` +
+        `                <div class=\"entry\" id="order${order.clientId}">\n` +
+        `                    <button type=\"submit\" class=\"cancel\" id=\"order${order.user}-${order.clientId}" onclick="sendRemove(this.id)">x</button>\n` +
         `                    <span style=\"color: ${color}\">${order.side} Order </span><span>${order.clientId} - Instrument: ${order.instrument.name}, User: ${order.user}<br>Price: ${order.price}$, Quantity: ${order.qty}</span>\n` +
         "                </div>";
     document.getElementById("book-field").innerHTML += newdiv;
@@ -121,7 +140,7 @@ function tradeOrder(trade) {
     order.qty = trade.qty;
     if (order.qty > 0) {
         let color = order.side === "BUY" ? "green" : "red";
-        document.getElementById(order.clientId).innerHTML =
+        document.getElementById(`order${order.clientId}`).innerHTML =
             `                    <button type=\"submit\" class=\"cancel\" id=\"${order.user}-${order.clientId}" onclick="sendRemove(this.id)">x</button>\n` +
             `                    <span style=\"color: ${color}\">${order.side} Order </span><span>${order.clientId} - Instrument: ${order.instrument.name}, User: ${order.user}<br> Price: ${order.price}$, Quantity: ${order.qty}</span>\n`;
     } else {
@@ -132,7 +151,7 @@ function tradeOrder(trade) {
 
 function removeOrder(bid) {
     event.preventDefault();
-    document.getElementById(bid).remove();
+    document.getElementById(`order${bid}`).remove();
     delete orders[bid];
     removeNotif(bid);
 }

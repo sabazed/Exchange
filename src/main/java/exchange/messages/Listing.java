@@ -7,7 +7,7 @@ import exchange.enums.Side;
 import java.math.BigDecimal;
 import java.time.Instant;
 
-public class List implements Message {
+public class Listing implements Message {
     private String user;
     private Instrument instrument;
     private Side side;
@@ -20,7 +20,7 @@ public class List implements Message {
     private String clientId;
     private long globalId;
 
-    public List(Order order) {
+    public Listing(Order order) {
         this.user = order.getUser();
         this.instrument = order.getInstrument();
         this.side = order.getSide();
@@ -80,7 +80,7 @@ public class List implements Message {
 
     @Override
     public String toString() {
-        return "List{" +
+        return "Listing{" +
                 "user='" + user + '\'' +
                 ", instrument=" + instrument.toString() +
                 ", side=" + side +

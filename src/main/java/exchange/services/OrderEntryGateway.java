@@ -1,9 +1,7 @@
 package exchange.services;
 
 import exchange.bus.MessageBus;
-import exchange.enums.Status;
 import exchange.messages.Cancel;
-import exchange.messages.Fail;
 import exchange.messages.Message;
 import exchange.messages.Order;
 import exchange.messages.Request;
@@ -21,16 +19,17 @@ public class OrderEntryGateway extends MessageProcessor {
     private final MessageBus exchangeBus;
     private final String endpointId;
     private final String engineId;
-    private final String providerId;
+    private final String referenceProviderId;
+    private final String marketProviderId;
     private final String selfId;
 
-    public OrderEntryGateway(MessageBus messageBus, String engineId, String providerId, String endpointId, String selfId) {
-        super();
+    public OrderEntryGateway(MessageBus messageBus, String engineId, String referenceProviderId, String marketProviderId, String endpointId, String selfId) {
         messages = new LinkedBlockingQueue<>();
         exchangeBus = messageBus;
         this.endpointId = endpointId;
         this.engineId = engineId;
-        this.providerId = providerId;
+        this.referenceProviderId = referenceProviderId;
+        this.marketProviderId = marketProviderId;
         this.selfId = selfId;
     }
 
@@ -56,16 +55,22 @@ public class OrderEntryGateway extends MessageProcessor {
                 Message message = messages.take();
                 LOG.info("Processing new {}", message);
                 // Check that message session or client id isn't null, otherwise return it as a Fail object
-                if (message.getSession() == null || message.getClientId() == null)
-                    message = new Fail(Status.OrderFail);
+                if (message.getSession() == null || message.getClientId() == null) {
+                    LOG.warn("Couldn't process message as the provided data was invalid - {}", message);
+                }
                 // Determine where to send the message, back to the endpoint or to the engine
-                if (message instanceof Order || message instanceof Cancel) {
+                else if (message instanceof Order || message instanceof Cancel) {
                     exchangeBus.sendMessage(engineId, message);
                 }
                 else if (message instanceof Request) {
-                    exchangeBus.sendMessage(providerId, message);
+                    exchangeBus.sendMessage(referenceProviderId, message);
+                    exchangeBus.sendMessage(marketProviderId, message);
+                    exchangeBus.sendMessage(engineId, message);
+                    // TODO Send to market provider from gateway or engine?
                 }
-                else exchangeBus.sendMessage(endpointId + message.getSession(), message);
+                else {
+                    exchangeBus.sendMessage(endpointId + message.getSession(), message);
+                }
             }
             catch (InterruptedException e) {
                 LOG.error("OrderEntryGateway interrupted!", e);

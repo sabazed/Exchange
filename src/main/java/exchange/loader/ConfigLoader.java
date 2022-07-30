@@ -23,22 +23,29 @@ public class ConfigLoader {
     public MessageProcessor getEngineInstance(MessageBus bus) throws ReflectiveOperationException {
         if (classConfig == null) throw new NullPointerException("Class configuration has not been loaded");
         Class<?> cls = Class.forName(classConfig.getEngineName());
-        Constructor<?> constr = cls.getConstructor(MessageBus.class, String.class, String.class);
-        return (MessageProcessor) constr.newInstance(bus, classConfig.getGatewayId(), classConfig.getEngineId());
+        Constructor<?> constr = cls.getConstructor(MessageBus.class, String.class, String.class, String.class);
+        return (MessageProcessor) constr.newInstance(bus, classConfig.getGatewayId(), classConfig.getMarketProviderId(), classConfig.getEngineId());
     }
 
     public MessageProcessor getGatewayInstance(MessageBus bus) throws ReflectiveOperationException {
         if (classConfig == null) throw new NullPointerException("Class configuration has not been loaded");
         Class<?> cls = Class.forName(classConfig.getGatewayName());
-        Constructor<?> constr = cls.getConstructor(MessageBus.class, String.class, String.class, String.class, String.class);
-        return (MessageProcessor) constr.newInstance(bus, classConfig.getEngineId(), classConfig.getProviderId(), classConfig.getEndpointId(), classConfig.getGatewayId());
+        Constructor<?> constr = cls.getConstructor(MessageBus.class, String.class, String.class, String.class, String.class, String.class);
+        return (MessageProcessor) constr.newInstance(bus, classConfig.getEngineId(), classConfig.getReferenceProviderId(), classConfig.getMarketProviderId(), classConfig.getEndpointId(), classConfig.getGatewayId());
     }
 
-    public MessageProcessor getProviderInstance(MessageBus bus) throws ReflectiveOperationException {
+    public MessageProcessor getReferenceProviderInstance(MessageBus bus) throws ReflectiveOperationException {
         if (classConfig == null) throw new NullPointerException("Class configuration has not been loaded");
-        Class<?> cls = Class.forName(classConfig.getProviderName());
+        Class<?> cls = Class.forName(classConfig.getReferenceProviderName());
         Constructor<?> constr = cls.getConstructor(MessageBus.class, String.class, String.class);
-        return (MessageProcessor) constr.newInstance(bus, classConfig.getGatewayId(), classConfig.getProviderId());
+        return (MessageProcessor) constr.newInstance(bus, classConfig.getGatewayId(), classConfig.getReferenceProviderId());
+    }
+
+    public MessageProcessor getMarketProviderInstance(MessageBus bus) throws ReflectiveOperationException {
+        if (classConfig == null) throw new NullPointerException("Class configuration has not been loaded");
+        Class<?> cls = Class.forName(classConfig.getMarketProviderName());
+        Constructor<?> constr = cls.getConstructor(MessageBus.class, String.class, String.class);
+        return (MessageProcessor) constr.newInstance(bus, classConfig.getGatewayId(), classConfig.getMarketProviderId());
     }
 
     public MessageBus getBusInstance() throws ReflectiveOperationException {

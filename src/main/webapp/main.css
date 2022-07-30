@@ -7,8 +7,8 @@ body {
 }
 
 h1 {
-    padding-top: 50px;
-    padding-bottom: 100px;
+    padding-top: 30px;
+    padding-bottom: 30px;
     font-size: 48px;
     text-shadow: -5px 5px 15px #000000;
 }
@@ -38,6 +38,7 @@ select {
 
 .btn {
     padding-top: 50px;
+    padding-bottom: 25px;
 }
 
 .cancel {
@@ -192,6 +193,14 @@ select {
     margin-top: 0;
     margin-bottom: 10%;
     color: #d50c0c;
+}
+
+.market-entry {
+    display: block;
+    background: #36393f;
+    border-radius: 5px;
+    padding: 5px;
+    margin: 5px;
 }
 
 /*#login {*/

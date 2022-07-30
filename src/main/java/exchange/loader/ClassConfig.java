@@ -5,11 +5,13 @@ public class ClassConfig {
     private String endpointId;
     private String engineId;
     private String gatewayId;
-    private String providerId;
+    private String marketProviderId;
+    private String referenceProviderId;
 
     private String engineName;
     private String gatewayName;
-    private String providerName;
+    private String marketProviderName;
+    private String referenceProviderName;
     private String busName;
 
     public String getEndpointId() {
@@ -24,8 +26,12 @@ public class ClassConfig {
         return gatewayId;
     }
 
-    public String getProviderId() {
-        return providerId;
+    public String getMarketProviderId() {
+        return marketProviderId;
+    }
+
+    public String getReferenceProviderId() {
+        return referenceProviderId;
     }
 
     public String getEngineName() {
@@ -36,8 +42,12 @@ public class ClassConfig {
         return gatewayName;
     }
 
-    public String getProviderName() {
-        return providerName;
+    public String getMarketProviderName() {
+        return marketProviderName;
+    }
+
+    public String getReferenceProviderName() {
+        return referenceProviderName;
     }
 
     public String getBusName() {

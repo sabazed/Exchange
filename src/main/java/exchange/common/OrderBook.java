@@ -4,6 +4,7 @@ import exchange.enums.Side;
 import exchange.messages.Message;
 import exchange.messages.Order;
 
+import java.math.BigDecimal;
 import java.util.HashMap;
 import java.util.Iterator;
 import java.util.Map;
@@ -60,4 +61,36 @@ public class OrderBook {
         return matched;
     }
 
+    public MarketDataEntry getBestPrices() {
+        return new MarketDataEntry(
+                instrument,
+                buyOrders.isEmpty() ? BigDecimal.ZERO : buyOrders.first().getPrice(),
+                sellOrders.isEmpty() ? BigDecimal.ZERO : sellOrders.first().getPrice()
+        );
+    }
+
 }
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+

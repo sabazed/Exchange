@@ -2,11 +2,13 @@ package exchange.services;
 
 import exchange.bus.MessageBus;
 import exchange.common.Instrument;
+import exchange.common.MarketDataEntry;
 import exchange.common.OrderBook;
 import exchange.enums.Status;
 import exchange.messages.Cancel;
 import exchange.messages.Fail;
-import exchange.messages.List;
+import exchange.messages.Listing;
+import exchange.messages.MarketData;
 import exchange.messages.Message;
 import exchange.messages.Order;
 import exchange.messages.Remove;
@@ -16,7 +18,9 @@ import org.apache.logging.log4j.Logger;
 
 import java.math.BigDecimal;
 import java.time.Instant;
+import java.util.Arrays;
 import java.util.HashMap;
+import java.util.List;
 import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.LinkedBlockingQueue;
 
@@ -30,8 +34,9 @@ public class MatchingEngine extends MessageProcessor {
     private final HashMap<Instrument, OrderBook> orderBooks;
     // Response bus to send responses for frontend
     private final MessageBus exchangeBus;
-    // Gateway ID for bus
+    // OrderEntryGateway and MarketDataProvider ID for bus
     private final String gatewayId;
+    private final String marketProviderId;
     // Service ID for this instance
     private final String selfId;
 
@@ -39,11 +44,12 @@ public class MatchingEngine extends MessageProcessor {
     private static long ID = 0;
 
 
-    public MatchingEngine(MessageBus messageBus, String gatewayId, String selfId) {
+    public MatchingEngine(MessageBus messageBus, String gatewayId, String marketProviderId, String selfId) {
         newOrders = new LinkedBlockingQueue<>();
         orderBooks = new HashMap<>();
         exchangeBus = messageBus;
         this.gatewayId = gatewayId;
+        this.marketProviderId = marketProviderId;
         this.selfId = selfId;
     }
 
@@ -88,13 +94,14 @@ public class MatchingEngine extends MessageProcessor {
         registerOrder(order);
         if (orderBook.addOrder(order)) {
             LOG.info("Listing message successful! - {}", order);
-            exchangeBus.sendMessage(gatewayId, new List(order));
+            exchangeBus.sendMessage(gatewayId, new Listing(order));
         }
         else {
             LOG.warn("Listing message unsuccessful! - {}", order);
             ID--;
             exchangeBus.sendMessage(gatewayId, new Fail(Status.OrderFail, order));
         }
+        exchangeBus.sendMessage(marketProviderId, new MarketData(order, getMarketData(order.getInstrument())));
     }
 
     private void cancelOrder(Cancel cancel) {
@@ -108,6 +115,7 @@ public class MatchingEngine extends MessageProcessor {
             LOG.info("Cancelled order {}", cancel);
             exchangeBus.sendMessage(gatewayId, new Remove(cancel));
         }
+        exchangeBus.sendMessage(marketProviderId, new MarketData(cancel, getMarketData(cancel.getInstrument())));
     }
 
     private boolean matchOrder(Order matched, Order order, OrderBook orderBook) {
@@ -135,7 +143,18 @@ public class MatchingEngine extends MessageProcessor {
         // Send trade for the matched order
         exchangeBus.sendMessage(gatewayId, new Trade(matched));
         LOG.info("Order {} traded - {}", matched.getGlobalId(), matched);
+        // Send updated market data
+        exchangeBus.sendMessage(marketProviderId, new MarketData(order, getMarketData(order.getInstrument(), matched.getInstrument())));
         return repeatMatching;
+    }
+
+    private List<MarketDataEntry> getMarketData(Instrument... instruments) {
+        if (instruments.length == 0) {
+            return orderBooks.values().stream().map(OrderBook::getBestPrices).toList();
+        }
+        else {
+            return Arrays.stream(instruments).map(instrument -> orderBooks.get(instrument).getBestPrices()).toList();
+        }
     }
 
     @Override
@@ -181,6 +200,9 @@ public class MatchingEngine extends MessageProcessor {
                             }
                         }
                     }
+                }
+                else {
+                    exchangeBus.sendMessage(gatewayId, new MarketData(message, getMarketData()));
                 }
             }
             catch (InterruptedException e) {

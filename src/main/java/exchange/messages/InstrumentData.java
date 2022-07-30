@@ -4,20 +4,18 @@ import exchange.common.Instrument;
 
 import java.util.List;
 
-public class Response implements Message {
+public class InstrumentData implements Message {
 
     private String session;
     private List<Instrument> instruments;
     private String clientId;
     private long globalId;
 
-    public Response(Message request, List<Instrument> instruments) {
+    public InstrumentData(Message request, List<Instrument> instruments) {
         this.session = request.getSession();
-        this.clientId = request.getClientId();
         this.instruments = instruments;
-    }
-
-    public Response() {
+        this.clientId = request.getClientId();
+        this.globalId = request.getGlobalId();
     }
 
     @Override
@@ -44,4 +42,13 @@ public class Response implements Message {
         return globalId;
     }
 
+    @Override
+    public String toString() {
+        return "Response{" +
+                "session='" + session + '\'' +
+                ", data=" + instruments +
+                ", clientId='" + clientId + '\'' +
+                ", globalId=" + globalId +
+                '}';
+    }
 }

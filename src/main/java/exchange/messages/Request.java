@@ -26,4 +26,12 @@ public class Request implements Message {
         return globalId;
     }
 
+    @Override
+    public String toString() {
+        return "Request{" +
+                "session='" + session + '\'' +
+                ", clientId='" + clientId + '\'' +
+                ", globalId=" + globalId +
+                '}';
+    }
 }

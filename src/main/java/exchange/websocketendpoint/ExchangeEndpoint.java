@@ -7,7 +7,6 @@ import exchange.enums.Status;
 import exchange.messages.Fail;
 import exchange.messages.Message;
 import exchange.services.MessageBusService;
-import exchange.services.ReferenceDataProvider;
 import jakarta.servlet.ServletContext;
 import jakarta.websocket.CloseReason;
 import jakarta.websocket.EncodeException;
@@ -26,8 +25,6 @@ public class ExchangeEndpoint extends Endpoint implements MessageBusService {
 
     // Exchange message bus for communication
     private ExchangeBus exchangeBus;
-    // Instrument loader for sending current instrument data to the websocket
-    private ReferenceDataProvider loader;
     // Session of the current endpoint
     private Session session;
     // Service IDs
@@ -52,9 +49,6 @@ public class ExchangeEndpoint extends Endpoint implements MessageBusService {
 
         // Get the servlet context through custom config with added user attribute
         ServletContext ctx = (ServletContext) config.getUserProperties().get(ServletContext.class.getName());
-
-        // Get ReferenceDataProvider from saved attributes
-        this.loader = (ReferenceDataProvider) ctx.getAttribute(ReferenceDataProvider.class.getName());
 
         // Get service IDs from the context attributes
         this.gatewayId = (String) ctx.getAttribute("GatewayId");
@@ -100,10 +94,10 @@ public class ExchangeEndpoint extends Endpoint implements MessageBusService {
             else {
                 processMessage(new Fail(Status.Quantity));
             }
-            LOG.error(t.getClass().getName() + " at session {}, disconnecting...", session.getId(), t.getCause());
+            LOG.error("{} at session {}, disconnecting...", t.getClass().getName(), session.getId(), t.getCause());
         }
         else {
-            LOG.error(t.getClass().getName() + " at session {}, disconnecting...", session.getId(), t.getCause());
+            LOG.error("{} at session {}, disconnecting...", t.getClass().getName(), session.getId(), t.getCause());
         }
         // TODO: Stop websocket from closing
     }

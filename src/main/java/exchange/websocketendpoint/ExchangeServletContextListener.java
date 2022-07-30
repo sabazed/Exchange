@@ -3,6 +3,7 @@ package exchange.websocketendpoint;
 import exchange.bus.ExchangeBus;
 import exchange.bus.MessageBus;
 import exchange.loader.ConfigLoader;
+import exchange.services.MarketDataProvider;
 import exchange.services.MatchingEngine;
 import exchange.services.MessageProcessor;
 import exchange.services.OrderEntryGateway;
@@ -26,7 +27,8 @@ public class ExchangeServletContextListener implements ServletContextListener {
 
     private MessageProcessor engine;
     private MessageProcessor gateway;
-    private MessageProcessor provider;
+    private MessageProcessor marketProvider;
+    private MessageProcessor referenceProvider;
     private MessageBus exchangeBus;
 
     @Override
@@ -65,8 +67,10 @@ public class ExchangeServletContextListener implements ServletContextListener {
             engine = serviceLoader.getEngineInstance(exchangeBus);
             LOG.info("Initializing a new Order Entry Gateway");
             gateway = serviceLoader.getGatewayInstance(exchangeBus);
+            LOG.info("Initializing Market Data Provider");
+            marketProvider = serviceLoader.getMarketProviderInstance(exchangeBus);
             LOG.info("Initializing Reference Data Provider");
-            provider = serviceLoader.getProviderInstance(exchangeBus);
+            referenceProvider = serviceLoader.getReferenceProviderInstance(exchangeBus);
         }
         catch (IOException e) {
             LOG.error("Couldn't read the config file, proceeding with default implementations", e);
@@ -84,22 +88,26 @@ public class ExchangeServletContextListener implements ServletContextListener {
             exchangeBus = new ExchangeBus();
             // Create all service instances
             LOG.info("Initializing a new Matching Engine");
-            engine = new MatchingEngine(exchangeBus, "Gateway", "Engine");
+            engine = new MatchingEngine(exchangeBus, "Gateway", "MarketProvider", "Engine");
             LOG.info("Initializing a new Order Entry Gateway");
-            gateway = new OrderEntryGateway(exchangeBus, "Engine", "Provider", "ServerEndpoint_", "Gateway");
+            gateway = new OrderEntryGateway(exchangeBus, "Engine", "ReferenceProvider", "MarketProvider", "ServerEndpoint_", "Gateway");
+            LOG.info("Initializing Market Data Provider");
+            marketProvider = new MarketDataProvider(exchangeBus, "Gateway", "MarketProvider");
             LOG.info("Initializing Reference Data Provider");
-            provider = new ReferenceDataProvider(exchangeBus, "Gateway", "Provider");
+            referenceProvider = new ReferenceDataProvider(exchangeBus, "Gateway", "ReferenceProvider");
         }
 
         // Register all instances
         exchangeBus.registerService(engine.getSelfId(), engine);
         exchangeBus.registerService(gateway.getSelfId(), gateway);
-        exchangeBus.registerService(provider.getSelfId(), provider);
+        exchangeBus.registerService(marketProvider.getSelfId(), marketProvider);
+        exchangeBus.registerService(referenceProvider.getSelfId(), referenceProvider);
 
         // Start the services
         engine.start();
         gateway.start();
-        provider.start();
+        marketProvider.start();
+        referenceProvider.start();
 
         // Add current listener to Servlet Context attributes
         sce.getServletContext().setAttribute(MessageBus.class.getName(), exchangeBus);
@@ -107,15 +115,14 @@ public class ExchangeServletContextListener implements ServletContextListener {
         sce.getServletContext().setAttribute("GatewayId", gateway.getSelfId());
         sce.getServletContext().setAttribute("EndpointId", serviceLoader.getEndpointId());
 
-
-
     }
 
     @Override
     public void contextDestroyed(ServletContextEvent sce){
         engine.stop();
         gateway.stop();
-        provider.stop();
+        marketProvider.stop();
+        referenceProvider.stop();
     }
 
 }
