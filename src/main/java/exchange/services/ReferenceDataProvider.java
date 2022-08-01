@@ -7,6 +7,7 @@ import exchange.messages.InstrumentDataResponse;
 import exchange.messages.Message;
 import jakarta.persistence.EntityManager;
 import jakarta.persistence.Persistence;
+import jakarta.persistence.criteria.CriteriaQuery;
 
 import java.util.List;
 
@@ -22,13 +23,19 @@ public class ReferenceDataProvider extends MessageProcessor {
 
     public ReferenceDataProvider(MessageBus messageBus, String gatewayId, String selfId) {
         super(messageBus, selfId, ReferenceDataProvider.class);
-        manager = Persistence.createEntityManagerFactory("instrumentUnit").createEntityManager();
-        instruments = manager.createQuery("FROM Instrument", Instrument.class).getResultList();
         this.gatewayId = gatewayId;
+        manager = Persistence.createEntityManagerFactory("exchangeUnit").createEntityManager();
+        instruments = fetchInstruments();
     }
 
     public String getSelfId() {
         return selfId;
+    }
+
+    private List<Instrument> fetchInstruments() {
+        CriteriaQuery<Instrument> criteria = manager.getCriteriaBuilder().createQuery(Instrument.class);
+        criteria.select(criteria.from(Instrument.class));
+        return manager.createQuery(criteria).getResultList();
     }
 
     @Override

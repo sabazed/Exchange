@@ -1,0 +1,16 @@
+2022-07-25 22:44:54 jdbc[4]: exception
+org.h2.jdbc.JdbcSQLSyntaxErrorException: Syntax error in SQL statement "CREATE TABLE Instrument\000d\000a(\000d\000a    id integer NOT NULL,\000d\000a    name text\000d\000a    PRIMARY KEY [*]id\000d\000a)"; expected "HASH, CONSTRAINT, COMMENT, UNIQUE, NOT, NULL, CHECK, REFERENCES, AUTO_INCREMENT, ,, )"; SQL statement:
+CREATE TABLE Instrument
+(
+    id integer NOT NULL,
+    name text
+    PRIMARY KEY id
+) [42001-210]
+2022-07-25 22:48:03 jdbc[4]: exception
+org.h2.jdbc.JdbcSQLSyntaxErrorException: Syntax error in SQL statement "CREATE TABLE Instrument\000d\000a(\000d\000a    id integer NOT NULL,\000d\000a    name text\000d\000a    PRIMARY KEY [*](id)\000d\000a)"; expected "HASH, CONSTRAINT, COMMENT, UNIQUE, NOT, NULL, CHECK, REFERENCES, AUTO_INCREMENT, ,, )"; SQL statement:
+CREATE TABLE Instrument
+(
+    id integer NOT NULL,
+    name text
+    PRIMARY KEY (id)
+) [42001-210]
