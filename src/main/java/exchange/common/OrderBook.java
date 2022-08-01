@@ -36,7 +36,7 @@ public class OrderBook {
     }
 
     public boolean addOrder(Order order) {
-        // If there was a problem while adding then change status flag to OrderFail and decrease ID counter
+        // Return true if added, false otherwise
         if ((order.getSide() == Side.BUY) ? buyOrders.add(order) : sellOrders.add(order)) {
             orderMap.put(order.getGlobalId(), order);
             return true;

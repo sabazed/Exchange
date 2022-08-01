@@ -83,10 +83,6 @@ public class Order implements Message {
         this.globalId = globalId;
     }
 
-    public void tradeWith(Order order) {
-        qty = qty.subtract(order.qty);
-    }
-
     @Override
     public String toString() {
         return "Order{user='" + user + '\'' +

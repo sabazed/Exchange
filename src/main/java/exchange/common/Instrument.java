@@ -32,7 +32,7 @@ public class Instrument {
 
     @Override
     public boolean equals(Object o) {
-        return o instanceof Instrument && hashCode() == o.hashCode();
+        return o instanceof Instrument other && id.equals(other.id);
     }
 
     @Override

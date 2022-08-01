@@ -98,7 +98,6 @@ public class MatchingEngine extends MessageProcessor {
         }
         else {
             LOG.warn("Listing message unsuccessful! - {}", order);
-            ID--;
             exchangeBus.sendMessage(gatewayId, new Fail(Status.OrderFail, order));
         }
         exchangeBus.sendMessage(marketProviderId, new MarketData(order, getMarketData(order.getInstrument())));
@@ -123,13 +122,13 @@ public class MatchingEngine extends MessageProcessor {
         // If currently matched order has more quantity, then mark our message as traded
         if (matched.getQty().compareTo(order.getQty()) > 0) {
             registerOrder(order);
-            matched.tradeWith(order);
+            matched.setQty(matched.getQty().subtract(order.getQty()));
             exchangeBus.sendMessage(gatewayId, new Trade(order));
             LOG.info("Matching successfully finished for {}", order);
         }
         else {
             orderBook.removeOrder(matched);
-            order.tradeWith(matched);
+            order.setQty(order.getQty().subtract(matched.getQty()));
             matched.setQty(BigDecimal.ZERO);
             // If the order has 0 qty then send it as traded
             if (order.getQty().compareTo(BigDecimal.ZERO) <= 0) {
