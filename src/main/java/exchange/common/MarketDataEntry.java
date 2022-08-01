@@ -1,6 +1,7 @@
 package exchange.common;
 
 import java.math.BigDecimal;
+import java.util.Objects;
 
 public class MarketDataEntry {
 
@@ -27,6 +28,16 @@ public class MarketDataEntry {
     }
 
     @Override
+    public int hashCode() {
+        return Objects.hashCode(instrument);
+    }
+
+    @Override
+    public boolean equals(Object obj) {
+        return this == obj || obj instanceof MarketDataEntry entry && instrument.equals(entry.instrument);
+    }
+
+    @Override
     public String toString() {
         return "MarketDataEntry{" +
                 "instrument=" + instrument +
@@ -34,4 +45,5 @@ public class MarketDataEntry {
                 ", sell=" + sell +
                 '}';
     }
+
 }

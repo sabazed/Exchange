@@ -8,7 +8,7 @@ import exchange.enums.Status;
 import exchange.messages.Cancel;
 import exchange.messages.Fail;
 import exchange.messages.Listing;
-import exchange.messages.MarketData;
+import exchange.messages.MarketDataResponse;
 import exchange.messages.Message;
 import exchange.messages.Order;
 import exchange.messages.Remove;
@@ -100,7 +100,7 @@ public class MatchingEngine extends MessageProcessor {
             LOG.warn("Listing message unsuccessful! - {}", order);
             exchangeBus.sendMessage(gatewayId, new Fail(Status.OrderFail, order));
         }
-        exchangeBus.sendMessage(marketProviderId, new MarketData(order, getMarketData(order.getInstrument())));
+        exchangeBus.sendMessage(marketProviderId, new MarketDataResponse(order, order.getInstrument(), getMarketData(order.getInstrument())));
     }
 
     private void cancelOrder(Cancel cancel) {
@@ -114,7 +114,7 @@ public class MatchingEngine extends MessageProcessor {
             LOG.info("Cancelled order {}", cancel);
             exchangeBus.sendMessage(gatewayId, new Remove(cancel));
         }
-        exchangeBus.sendMessage(marketProviderId, new MarketData(cancel, getMarketData(cancel.getInstrument())));
+        exchangeBus.sendMessage(marketProviderId, new MarketDataResponse(cancel, cancel.getInstrument(), getMarketData(cancel.getInstrument())));
     }
 
     private boolean matchOrder(Order matched, Order order, OrderBook orderBook) {
@@ -143,7 +143,7 @@ public class MatchingEngine extends MessageProcessor {
         exchangeBus.sendMessage(gatewayId, new Trade(matched));
         LOG.info("Order {} traded - {}", matched.getGlobalId(), matched);
         // Send updated market data
-        exchangeBus.sendMessage(marketProviderId, new MarketData(order, getMarketData(order.getInstrument(), matched.getInstrument())));
+        exchangeBus.sendMessage(marketProviderId, new MarketDataResponse(order, order.getInstrument(), getMarketData(order.getInstrument(), matched.getInstrument())));
         return repeatMatching;
     }
 
@@ -199,9 +199,6 @@ public class MatchingEngine extends MessageProcessor {
                             }
                         }
                     }
-                }
-                else {
-                    exchangeBus.sendMessage(gatewayId, new MarketData(message, getMarketData()));
                 }
             }
             catch (InterruptedException e) {

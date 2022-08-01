@@ -1,6 +1,6 @@
 package exchange.messages;
 
-public class Request implements Message {
+public class InstrumentDataRequest implements Message {
 
     private String session;
     private String clientId;
@@ -28,10 +28,11 @@ public class Request implements Message {
 
     @Override
     public String toString() {
-        return "Request{" +
+        return "InstrumentDataRequest{" +
                 "session='" + session + '\'' +
                 ", clientId='" + clientId + '\'' +
                 ", globalId=" + globalId +
                 '}';
     }
+
 }

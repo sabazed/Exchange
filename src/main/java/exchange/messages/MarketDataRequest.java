@@ -1,22 +1,10 @@
 package exchange.messages;
 
-import exchange.common.Instrument;
-
-import java.util.List;
-
-public class InstrumentData implements Message {
+public class MarketDataRequest implements Message {
 
     private String session;
-    private List<Instrument> instruments;
     private String clientId;
     private long globalId;
-
-    public InstrumentData(Message request, List<Instrument> instruments) {
-        this.session = request.getSession();
-        this.instruments = instruments;
-        this.clientId = request.getClientId();
-        this.globalId = request.getGlobalId();
-    }
 
     @Override
     public String getSession() {
@@ -26,10 +14,6 @@ public class InstrumentData implements Message {
     @Override
     public void setSession(String session) {
         this.session = session;
-    }
-
-    public List<Instrument> getInstruments() {
-        return instruments;
     }
 
     @Override
@@ -44,11 +28,11 @@ public class InstrumentData implements Message {
 
     @Override
     public String toString() {
-        return "Response{" +
+        return "MarketDataRequest{" +
                 "session='" + session + '\'' +
-                ", data=" + instruments +
                 ", clientId='" + clientId + '\'' +
                 ", globalId=" + globalId +
                 '}';
     }
+
 }

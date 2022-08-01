@@ -2,7 +2,7 @@ package exchange.services;
 
 import exchange.bus.MessageBus;
 import exchange.common.Instrument;
-import exchange.messages.InstrumentData;
+import exchange.messages.InstrumentDataResponse;
 import exchange.messages.Message;
 import jakarta.persistence.EntityManager;
 import jakarta.persistence.Persistence;
@@ -21,6 +21,8 @@ public class ReferenceDataProvider extends MessageProcessor {
     private final EntityManager manager;
     // Use a LinkedBlockingQueue to receive new orders
     private final BlockingQueue<Message> requests;
+    // Instruments to load
+    private final List<Instrument> instruments;
     // Response bus to send responses for frontend
     private final MessageBus exchangeBus;
     // Gateway ID and Engine ID
@@ -28,25 +30,18 @@ public class ReferenceDataProvider extends MessageProcessor {
     // Service ID for this instance
     private final String selfId;
 
-    // Instruments to load
-    private List<Instrument> instruments;
 
     public ReferenceDataProvider(MessageBus messageBus, String gatewayId, String selfId) {
         manager = Persistence.createEntityManagerFactory("instrumentUnit").createEntityManager();
         requests = new LinkedBlockingQueue<>();
+        instruments = manager.createQuery("FROM Instrument", Instrument.class).getResultList();
         exchangeBus = messageBus;
         this.gatewayId = gatewayId;
         this.selfId = selfId;
-
-        getInstruments();
     }
 
     public String getSelfId() {
         return selfId;
-    }
-
-    private void getInstruments() {
-        instruments = manager.createQuery("FROM Instrument", Instrument.class).getResultList();
     }
 
     @Override
@@ -66,7 +61,7 @@ public class ReferenceDataProvider extends MessageProcessor {
             try {
                 Message message = requests.take();
                 LOG.info("Processing new {}", message);
-                exchangeBus.sendMessage(gatewayId, new InstrumentData(message, instruments));
+                exchangeBus.sendMessage(gatewayId, new InstrumentDataResponse(message, instruments));
             }
             catch (InterruptedException e) {
                 LOG.error("OrderEntryGateway interrupted!", e);

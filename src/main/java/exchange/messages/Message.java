@@ -11,7 +11,8 @@ import com.fasterxml.jackson.annotation.JsonTypeInfo;
 @JsonSubTypes({
         @Type(value = Order.class, name = "Order"),
         @Type(value = Cancel.class, name = "Cancel"),
-        @Type(value = Request.class, name = "Request")
+        @Type(value = MarketDataRequest.class, name = "MarketDataRequest"),
+        @Type(value = InstrumentDataRequest.class, name = "InstrumentDataRequest")
 })
 public interface Message {
 

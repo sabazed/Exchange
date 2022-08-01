@@ -2,9 +2,10 @@ package exchange.services;
 
 import exchange.bus.MessageBus;
 import exchange.messages.Cancel;
+import exchange.messages.InstrumentDataRequest;
+import exchange.messages.MarketDataRequest;
 import exchange.messages.Message;
 import exchange.messages.Order;
-import exchange.messages.Request;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
@@ -62,11 +63,11 @@ public class OrderEntryGateway extends MessageProcessor {
                 else if (message instanceof Order || message instanceof Cancel) {
                     exchangeBus.sendMessage(engineId, message);
                 }
-                else if (message instanceof Request) {
+                else if (message instanceof InstrumentDataRequest) {
                     exchangeBus.sendMessage(referenceProviderId, message);
+                }
+                else if (message instanceof MarketDataRequest) {
                     exchangeBus.sendMessage(marketProviderId, message);
-                    exchangeBus.sendMessage(engineId, message);
-                    // TODO Send to market provider from gateway or engine?
                 }
                 else {
                     exchangeBus.sendMessage(endpointId + message.getSession(), message);

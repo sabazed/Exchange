@@ -32,17 +32,22 @@ wsocket.onmessage = function (evt) {
             showError(json.status);
         }
     }
-    else if (json.type === "InstrumentData") {
+    else if (json.type === "InstrumentDataResponse") {
             loadInstruments(json.instruments);
+            let newjson = {};
+            newjson.type = "MarketDataRequest";
+            newjson.clientId = request_id++;
+            console.log(newjson);
+            wsocket.send(JSON.stringify(newjson));
     }
-    else if (json.type === "MarketData") {
+    else if (json.type === "MarketDataResponse") {
             updateMarketData(json.updates);
     }
 }
 
 wsocket.onopen = function (evt) {
     let json = {};
-    json.type = "Request";
+    json.type = "InstrumentDataRequest";
     json.clientId = request_id++;
     console.log(json);
     wsocket.send(JSON.stringify(json));
