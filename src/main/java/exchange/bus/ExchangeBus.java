@@ -10,7 +10,7 @@ import java.util.concurrent.ConcurrentMap;
 
 public class ExchangeBus implements MessageBus {
 
-    private final static Logger LOG = LogManager.getLogger("exchangeLogger");
+    private final static Logger LOG = LogManager.getLogger(ExchangeBus.class);
 
     private final ConcurrentMap<String, MessageBusService> services;
 
@@ -35,7 +35,7 @@ public class ExchangeBus implements MessageBus {
         MessageBusService service = services.get(serviceId);
         if (service != null) {
             LOG.info("Sending service {} a new message {}", serviceId, message);
-            service.processMessage(message);
+            service.issueMessage(message);
         }
         else {
             LOG.warn("Couldn't find registered service with id {} from {}", serviceId, message);

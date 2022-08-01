@@ -21,7 +21,7 @@ import java.io.IOException;
 
 public class ExchangeEndpoint extends Endpoint implements MessageBusService {
 
-    private static final Logger LOG = LogManager.getLogger("exchangeLogger");
+    private static final Logger LOG = LogManager.getLogger(ExchangeEndpoint.class);
 
     // Exchange message bus for communication
     private ExchangeBus exchangeBus;
@@ -32,7 +32,7 @@ public class ExchangeEndpoint extends Endpoint implements MessageBusService {
     private String gatewayId;
 
     // Method for sending a Message to the remote endpoint
-    public void processMessage(Message message) {
+    public void issueMessage(Message message) {
         try {
             session.getBasicRemote().sendObject(message);
             LOG.info("Sent session {} the message - {}", session.getId(), message);
@@ -63,12 +63,7 @@ public class ExchangeEndpoint extends Endpoint implements MessageBusService {
             public void onMessage(Message message) {
                 message.setSession(session.getId());
                 LOG.info("New response from session {}, data - {}", session.getId(), message);
-                if (message instanceof Fail) {
-                    processMessage(message);
-                }
-                else {
-                    exchangeBus.sendMessage(gatewayId, message);
-                }
+                exchangeBus.sendMessage(gatewayId, message);
             }
         });
 
@@ -89,10 +84,10 @@ public class ExchangeEndpoint extends Endpoint implements MessageBusService {
             int end = errorMessage.lastIndexOf("\"");
             String field = errorMessage.substring(start + 1, end);
             if (field.equals("price")) {
-                processMessage(new Fail(Status.Price));
+                issueMessage(new Fail(Status.Price));
             }
             else {
-                processMessage(new Fail(Status.Quantity));
+                issueMessage(new Fail(Status.Quantity));
             }
             LOG.error("{} at session {}, disconnecting...", t.getClass().getName(), session.getId(), t.getCause());
         }

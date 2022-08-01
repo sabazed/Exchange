@@ -1,27 +1,37 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <Configuration>
     <Appenders>
-        <Console name="ConsoleRoot" target="SYSTEM_OUT">
+        <Console name="Console" target="SYSTEM_OUT">
             <PatternLayout
                 disableAnsi="false"
-                pattern="%highlight{%d{HH:mm:ss.SSS} [%t] %-5level %logger{36} - %msg%n}{FATAL=red blink, ERROR=red, WARN=yellow, INFO=default, DEBUG=cyan, TRACE=white}"
-                logger="root"
-            />
-        </Console>
-        <Console name="ConsoleDefault" target="SYSTEM_OUT">
-            <PatternLayout
-                    disableAnsi="false"
-                    pattern="%highlight{%d{HH:mm:ss.SSS} [%t] %-5level %C{2} - %msg%n}{FATAL=red blink, ERROR=red, WARN=yellow, INFO=default, DEBUG=cyan, TRACE=white}"
-                    logger="root"
+                pattern="%highlight{%d{HH:mm:ss.SSS} [%t] %-5level %c{1} - %msg%n}{FATAL=red blink, ERROR=red, WARN=yellow, INFO=default, DEBUG=cyan, TRACE=white}"
             />
         </Console>
     </Appenders>
     <Loggers>
-        <Logger name="exchangeLogger" level="all" additivity="false">
-            <AppenderRef ref="ConsoleDefault"/>
+        <Logger name="exchange.bus.ExchangeBus" level="all" additivity="false">
+            <AppenderRef ref="Console"/>
         </Logger>
-        <Root level="info">
-            <AppenderRef ref="ConsoleRoot"/>
+        <Logger name="exchange.websocketendpoint.ExchangeEndpoint" level="all" additivity="false">
+            <AppenderRef ref="Console"/>
+        </Logger>
+        <Logger name="exchange.websocketendpoint.ExchangeServletContextListener" level="all" additivity="false">
+            <AppenderRef ref="Console"/>
+        </Logger>
+        <Logger name="exchange.services.MarketDataProvider" level="all" additivity="false">
+            <AppenderRef ref="Console"/>
+        </Logger>
+        <Logger name="exchange.services.MatchingEngine" level="all" additivity="false">
+            <AppenderRef ref="Console"/>
+        </Logger>
+        <Logger name="exchange.services.OrderEntryGateway" level="all" additivity="false">
+            <AppenderRef ref="Console"/>
+        </Logger>
+        <Logger name="exchange.services.ReferenceDataProvider" level="all" additivity="false">
+            <AppenderRef ref="Console"/>
+        </Logger>
+        <Root level="warn">
+            <AppenderRef ref="Console"/>
         </Root>
     </Loggers>
 </Configuration>

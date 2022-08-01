@@ -4,6 +4,6 @@ import exchange.messages.Message;
 
 public interface MessageBusService {
 
-    void processMessage(Message message);
+    void issueMessage(Message message);
 
 }

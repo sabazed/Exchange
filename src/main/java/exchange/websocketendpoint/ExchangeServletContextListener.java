@@ -21,8 +21,7 @@ import java.util.List;
 
 public class ExchangeServletContextListener implements ServletContextListener {
 
-    private static final Logger LOG = LogManager.getLogger("exchangeLogger");
-
+    private final Logger LOG = LogManager.getLogger(ExchangeServletContextListener.class);
     private ConfigLoader serviceLoader;
 
     private MessageProcessor engine;

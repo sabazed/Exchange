@@ -13,60 +13,35 @@ import exchange.messages.Message;
 import exchange.messages.Order;
 import exchange.messages.Remove;
 import exchange.messages.Trade;
-import org.apache.logging.log4j.LogManager;
-import org.apache.logging.log4j.Logger;
 
 import java.math.BigDecimal;
 import java.time.Instant;
 import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
-import java.util.concurrent.BlockingQueue;
-import java.util.concurrent.LinkedBlockingQueue;
 
 public class MatchingEngine extends MessageProcessor {
 
-    private final static Logger LOG = LogManager.getLogger("exchangeLogger");
-
-    // Use a LinkedBlockingQueue to receive new orders
-    private final BlockingQueue<Message> newOrders;
     // Keep an Order Book for storing all orders
     private final HashMap<Instrument, OrderBook> orderBooks;
-    // Response bus to send responses for frontend
-    private final MessageBus exchangeBus;
     // OrderEntryGateway and MarketDataProvider ID for bus
     private final String gatewayId;
     private final String marketProviderId;
-    // Service ID for this instance
-    private final String selfId;
 
     // Keep count of orders to give them unique IDs
     private static long ID = 0;
 
 
     public MatchingEngine(MessageBus messageBus, String gatewayId, String marketProviderId, String selfId) {
-        newOrders = new LinkedBlockingQueue<>();
+        super(messageBus, selfId, MatchingEngine.class);
         orderBooks = new HashMap<>();
-        exchangeBus = messageBus;
         this.gatewayId = gatewayId;
         this.marketProviderId = marketProviderId;
-        this.selfId = selfId;
     }
 
     @Override
     public String getSelfId() {
         return selfId;
-    }
-
-    @Override
-    public void processMessage(Message message) {
-        try {
-            newOrders.put(message);
-        }
-        catch (InterruptedException e) {
-            LOG.error("Thread interrupted, aborting...", e);
-            stop();
-        }
     }
 
     private void registerOrder(Order order) {
@@ -176,44 +151,34 @@ public class MatchingEngine extends MessageProcessor {
     }
 
     @Override
-    protected void processMessages() {
-        LOG.info("MatchingEngine up and running!");
-        // Run endlessly
-        while (running) {
-            try {
-                // Receive order from the queue, if it is empty - wait for it.
-                Message message = newOrders.take();
-                LOG.info("Processing new {}", message);
-                // Check if the message has Cancel status to remove the order
-                if (message instanceof Cancel cancel) {
-                    cancelOrder(cancel);
-                }
-                else if (message instanceof Order order) {
-                    // Check if the instrument exists in the order book and if not, add it
-                    OrderBook orderBook = orderBooks.get(order.getInstrument());
-                    if (orderBook == null) {
-                        orderBooks.put(order.getInstrument(), new OrderBook(order.getInstrument()));
-                        orderBook = orderBooks.get(order.getInstrument());
-                    }
-                    // Check if all data are valid and if not, skip the iteration and send the error message
-                    Status invalidStatus = validateMessage(order);
-                    if (invalidStatus != null) {
-                        if (invalidStatus == Status.OrderFail) LOG.warn("Invalid data in {}", message);
-                        else LOG.info("Invalid user input in {}", message);
-                        exchangeBus.sendMessage(gatewayId, new Fail(invalidStatus, message));
-                    }
-                    else {
-                        // If the order is valid then we process it
-                        processOrder(order, orderBook);
-                    }
-                }
+    protected void processMessage(Message message) {
+        // Check if the message has Cancel status to remove the order
+        if (message instanceof Cancel cancel) {
+            cancelOrder(cancel);
+        }
+        else if (message instanceof Order order) {
+            // Check if the instrument exists in the order book and if not, add it
+            OrderBook orderBook = orderBooks.get(order.getInstrument());
+            if (orderBook == null) {
+                orderBooks.put(order.getInstrument(), new OrderBook(order.getInstrument()));
+                orderBook = orderBooks.get(order.getInstrument());
             }
-            catch (InterruptedException e) {
-                LOG.error("Matching Engine interrupted!", e);
-                stop();
+            // Check if all data are valid and if not, skip the iteration and send the error message
+            Status invalidStatus = validateMessage(order);
+            if (invalidStatus != null) {
+                if (invalidStatus == Status.OrderFail) LOG.warn("Invalid data in {}", message);
+                else LOG.info("Invalid user input in {}", message);
+                exchangeBus.sendMessage(gatewayId, new Fail(invalidStatus, message));
+            }
+            else {
+                // If the order is valid then we process it
+                processOrder(order, orderBook);
             }
         }
-        LOG.info("MatchingEngine stopped working...");
+        else {
+            LOG.error("Invalid message type received, exiting - {}", message);
+            throw new IllegalMessageException(message.toString());
+        }
     }
 
 }

@@ -14,8 +14,11 @@ public class MessageDecoder implements Decoder.Text<Message> {
         Message message;
         try {
             message = mapper.readValue(json, Message.class);
+            if (message.getClientId() == null) {
+                throw new IllegalArgumentException();
+            }
         }
-        catch (IOException e) {
+        catch (IOException | IllegalArgumentException e) {
             throw new DecoderException(json, e);
         }
         return message;
