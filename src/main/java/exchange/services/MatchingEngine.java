@@ -139,12 +139,31 @@ public class MatchingEngine extends MessageProcessor {
             // If qty is more than 0 then continue iteration
             else repeatMatching = true;
         }
+        // Change last trade price for the order book
+        orderBook.setLastTrade(order.getPrice());
         // Send trade for the matched order
         exchangeBus.sendMessage(gatewayId, new Trade(matched));
         LOG.info("Order {} traded - {}", matched.getGlobalId(), matched);
         // Send updated market data
         exchangeBus.sendMessage(marketProviderId, new MarketDataResponse(order, order.getInstrument(), getMarketData(order.getInstrument(), matched.getInstrument())));
         return repeatMatching;
+    }
+
+    private void processOrder(Order order, OrderBook orderBook) {
+        // Loop until all available orders are exchanged
+        boolean repeatMatching = true;
+        while (repeatMatching) {
+            repeatMatching = false;
+            Order matched = orderBook.getFirstMatch(order);
+            // If no match was found then add the order
+            if (matched == null) {
+                addOrder(order, orderBook);
+            }
+            else {
+                // Process trade between matched and order
+                repeatMatching = matchOrder(matched, order, orderBook);
+            }
+        }
     }
 
     private List<MarketDataEntry> getMarketData(Instrument... instruments) {
@@ -184,20 +203,8 @@ public class MatchingEngine extends MessageProcessor {
                         exchangeBus.sendMessage(gatewayId, new Fail(invalidStatus, message));
                     }
                     else {
-                        // Loop until all available orders are exchanged
-                        boolean repeatMatching = true;
-                        while (repeatMatching) {
-                            repeatMatching = false;
-                            Order matched = orderBook.getFirstMatch(order);
-                            // If no match was found then add the order
-                            if (matched == null) {
-                                addOrder(order, orderBook);
-                            }
-                            else {
-                                // Process trade between matched and order
-                                repeatMatching = matchOrder(matched, order, orderBook);
-                            }
-                        }
+                        // If the order is valid then we process it
+                        processOrder(order, orderBook);
                     }
                 }
             }

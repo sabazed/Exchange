@@ -17,12 +17,15 @@ public class OrderBook {
     private final TreeSet<Order> buyOrders;
     private final TreeSet<Order> sellOrders;
     private final Map<Long, Order> orderMap;
+    // Most recent trade price
+    private BigDecimal lastTrade;
 
     public OrderBook(Instrument instrument) {
         this.instrument = instrument;
         buyOrders = new TreeSet<>(new OrderComparator(true));
         sellOrders = new TreeSet<>(new OrderComparator(false));
         orderMap = new HashMap<>();
+        lastTrade = BigDecimal.ZERO;
     }
 
     public boolean removeOrder(Message message) {
@@ -61,11 +64,16 @@ public class OrderBook {
         return matched;
     }
 
+    public void setLastTrade(BigDecimal lastTrade) {
+        this.lastTrade = lastTrade;
+    }
+
     public MarketDataEntry getBestPrices() {
         return new MarketDataEntry(
                 instrument,
                 buyOrders.isEmpty() ? BigDecimal.ZERO : buyOrders.first().getPrice(),
-                sellOrders.isEmpty() ? BigDecimal.ZERO : sellOrders.first().getPrice()
+                sellOrders.isEmpty() ? BigDecimal.ZERO : sellOrders.first().getPrice(),
+                lastTrade
         );
     }
 

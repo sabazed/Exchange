@@ -8,11 +8,13 @@ public class MarketDataEntry {
     private final Instrument instrument;
     private final BigDecimal buy;
     private final BigDecimal sell;
+    private final BigDecimal lastTrade;
 
-    public MarketDataEntry(Instrument instrument, BigDecimal buy, BigDecimal sell) {
+    public MarketDataEntry(Instrument instrument, BigDecimal buy, BigDecimal sell, BigDecimal lastTrade) {
         this.instrument = instrument;
         this.buy = buy;
         this.sell = sell;
+        this.lastTrade = lastTrade;
     }
 
     public Instrument getInstrument() {
@@ -25,6 +27,10 @@ public class MarketDataEntry {
 
     public BigDecimal getSell() {
         return sell;
+    }
+
+    public BigDecimal getLastTrade() {
+        return lastTrade;
     }
 
     @Override
