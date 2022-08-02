@@ -1,12 +1,23 @@
 {
   "endpointId": "ServerEndpoint_",
-  "engineId": "Engine",
   "gatewayId": "Gateway",
-  "marketProviderId": "MarketProvider",
-  "referenceProviderId": "ReferenceProvider",
-  "engineName": "exchange.services.MatchingEngine",
-  "gatewayName": "exchange.services.OrderEntryGateway",
-  "marketProviderName": "exchange.services.MarketDataProvider",
-  "referenceProviderName": "exchange.services.ReferenceDataProvider",
-  "busName": "exchange.bus.ExchangeBus"
+  "busName": "exchange.bus.ExchangeBus",
+  "services": [
+    {
+      "name": "exchange.services.OrderEntryGateway",
+      "params": ["Engine", "ReferenceProvider", "MarketProvider", "ServerEndpoint_", "Gateway"]
+    },
+    {
+      "name": "exchange.services.MatchingEngine",
+      "params": ["Gateway", "MarketProvider", "Engine"]
+    },
+    {
+      "name": "exchange.services.MarketDataProvider",
+      "params": ["Gateway", "MarketProvider"]
+    },
+    {
+      "name": "exchange.services.ReferenceDataProvider",
+      "params": ["Gateway", "ReferenceProvider"]
+    }
+  ]
 }

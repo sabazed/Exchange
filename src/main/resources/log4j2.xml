@@ -9,28 +9,19 @@
         </Console>
     </Appenders>
     <Loggers>
-        <Logger name="exchange.bus.ExchangeBus" level="all" additivity="false">
+        <Logger name="exchange.bus" level="all" additivity="false">
             <AppenderRef ref="Console"/>
         </Logger>
-        <Logger name="exchange.websocketendpoint.ExchangeEndpoint" level="all" additivity="false">
+        <Logger name="exchange.websocketendpoint" level="all" additivity="false">
             <AppenderRef ref="Console"/>
         </Logger>
-        <Logger name="exchange.websocketendpoint.ExchangeServletContextListener" level="all" additivity="false">
+        <Logger name="exchange.services" level="all" additivity="false">
             <AppenderRef ref="Console"/>
         </Logger>
-        <Logger name="exchange.services.MarketDataProvider" level="all" additivity="false">
+        <Logger name="org.hibernate" level="warn" additivity="false">
             <AppenderRef ref="Console"/>
         </Logger>
-        <Logger name="exchange.services.MatchingEngine" level="all" additivity="false">
-            <AppenderRef ref="Console"/>
-        </Logger>
-        <Logger name="exchange.services.OrderEntryGateway" level="all" additivity="false">
-            <AppenderRef ref="Console"/>
-        </Logger>
-        <Logger name="exchange.services.ReferenceDataProvider" level="all" additivity="false">
-            <AppenderRef ref="Console"/>
-        </Logger>
-        <Root level="warn">
+        <Root level="info">
             <AppenderRef ref="Console"/>
         </Root>
     </Loggers>

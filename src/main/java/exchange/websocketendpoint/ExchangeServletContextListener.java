@@ -17,6 +17,7 @@ import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
 import java.io.IOException;
+import java.util.ArrayList;
 import java.util.List;
 
 public class ExchangeServletContextListener implements ServletContextListener {
@@ -24,10 +25,7 @@ public class ExchangeServletContextListener implements ServletContextListener {
     private final Logger LOG = LogManager.getLogger(ExchangeServletContextListener.class);
     private ConfigLoader serviceLoader;
 
-    private MessageProcessor engine;
-    private MessageProcessor gateway;
-    private MessageProcessor marketProvider;
-    private MessageProcessor referenceProvider;
+    private List<MessageProcessor> services;
     private MessageBus exchangeBus;
 
     @Override
@@ -55,21 +53,9 @@ public class ExchangeServletContextListener implements ServletContextListener {
         serviceLoader = new ConfigLoader();
         boolean exception = false;
         try {
-            // Read the config json file
-            LOG.info("Reading config from the file");
             serviceLoader.loadConfig();
-            // Initialize the Response Bus
-            LOG.info("Initializing a new Exchange Bus");
             exchangeBus = serviceLoader.getBusInstance();
-            // Create all service instances
-            LOG.info("Initializing a new Matching Engine");
-            engine = serviceLoader.getEngineInstance(exchangeBus);
-            LOG.info("Initializing a new Order Entry Gateway");
-            gateway = serviceLoader.getGatewayInstance(exchangeBus);
-            LOG.info("Initializing Market Data Provider");
-            marketProvider = serviceLoader.getMarketProviderInstance(exchangeBus);
-            LOG.info("Initializing Reference Data Provider");
-            referenceProvider = serviceLoader.getReferenceProviderInstance(exchangeBus);
+            services = serviceLoader.getServices(exchangeBus);
         }
         catch (IOException e) {
             LOG.error("Couldn't read the config file, proceeding with default implementations", e);
@@ -82,46 +68,33 @@ public class ExchangeServletContextListener implements ServletContextListener {
 
         // If service loader failed then continue with default classes
         if (exception) {
-            // Initialize the Response Bus
-            LOG.info("Initializing a new Exchange Bus");
             exchangeBus = new ExchangeBus();
-            // Create all service instances
-            LOG.info("Initializing a new Matching Engine");
-            engine = new MatchingEngine(exchangeBus, "Gateway", "MarketProvider", "Engine");
-            LOG.info("Initializing a new Order Entry Gateway");
-            gateway = new OrderEntryGateway(exchangeBus, "Engine", "ReferenceProvider", "MarketProvider", "ServerEndpoint_", "Gateway");
-            LOG.info("Initializing Market Data Provider");
-            marketProvider = new MarketDataProvider(exchangeBus, "Gateway", "MarketProvider");
-            LOG.info("Initializing Reference Data Provider");
-            referenceProvider = new ReferenceDataProvider(exchangeBus, "Gateway", "ReferenceProvider");
+            services = new ArrayList<>();
+            services.add(new MatchingEngine(exchangeBus, "Gateway", "MarketProvider", "Engine"));
+            services.add(new OrderEntryGateway(exchangeBus, "Engine", "ReferenceProvider", "MarketProvider", "ServerEndpoint_", "Gateway"));
+            services.add(new MarketDataProvider(exchangeBus, "Gateway", "MarketProvider"));
+            services.add(new ReferenceDataProvider(exchangeBus, "Gateway", "ReferenceProvider"));
+            sce.getServletContext().setAttribute("GatewayId", serviceLoader.getGatewayId());
+            sce.getServletContext().setAttribute("EndpointId", serviceLoader.getEndpointId());
         }
 
         // Register all instances
-        exchangeBus.registerService(engine.getSelfId(), engine);
-        exchangeBus.registerService(gateway.getSelfId(), gateway);
-        exchangeBus.registerService(marketProvider.getSelfId(), marketProvider);
-        exchangeBus.registerService(referenceProvider.getSelfId(), referenceProvider);
+        for (MessageProcessor service : services) exchangeBus.registerService(service.getSelfId(), service);
 
         // Start the services
-        engine.start();
-        gateway.start();
-        marketProvider.start();
-        referenceProvider.start();
+        for (MessageProcessor service : services) service.start();
 
         // Add current listener to Servlet Context attributes
         sce.getServletContext().setAttribute(MessageBus.class.getName(), exchangeBus);
         // Add gateway and endpoint IDs
-        sce.getServletContext().setAttribute("GatewayId", gateway.getSelfId());
-        sce.getServletContext().setAttribute("EndpointId", serviceLoader.getEndpointId());
+        sce.getServletContext().setAttribute("GatewayId", "Gateway");
+        sce.getServletContext().setAttribute("EndpointId", "ServerEndpoint_");
 
     }
 
     @Override
     public void contextDestroyed(ServletContextEvent sce){
-        engine.stop();
-        gateway.stop();
-        marketProvider.stop();
-        referenceProvider.stop();
+        for (MessageProcessor service : services) service.stop();
     }
 
 }
