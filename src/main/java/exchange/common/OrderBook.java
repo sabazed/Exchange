@@ -28,9 +28,9 @@ public class OrderBook {
         lastTrade = BigDecimal.ZERO;
     }
 
-    public boolean removeOrder(Message message) {
+    public boolean removeOrder(long globalId) {
         // Check if the map contains the order
-        Order order = orderMap.remove(message.getGlobalId());
+        Order order = orderMap.remove(globalId);
         // Check if order can be removed from their tree
         if (order != null) {
             return (order.getSide() == Side.BUY) ? buyOrders.remove(order) : sellOrders.remove(order);

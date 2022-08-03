@@ -28,7 +28,6 @@ public class Cancel implements Message {
         return clientId;
     }
 
-    @Override
     public long getGlobalId() {
         return globalId;
     }

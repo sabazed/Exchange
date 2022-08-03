@@ -73,7 +73,7 @@ public class MatchingEngine extends MessageProcessor {
         }
         else {
             LOG.warn("Listing message unsuccessful! - {}", order);
-            exchangeBus.sendMessage(gatewayId, new Fail(Status.OrderFail, order));
+            exchangeBus.sendMessage(gatewayId, new Fail(Status.OrderFail, order, order.getGlobalId()));
         }
         exchangeBus.sendMessage(marketProviderId, new MarketDataResponse(order, order.getInstrument(), getMarketData(order.getInstrument())));
     }
@@ -81,9 +81,9 @@ public class MatchingEngine extends MessageProcessor {
     private void cancelOrder(Cancel cancel) {
         // Check if the instrument exists in the order book and if not, the cancel is invalid
         OrderBook orderBook = orderBooks.get(cancel.getInstrument());
-        if (orderBook == null || !orderBook.removeOrder(cancel)) {
+        if (orderBook == null || !orderBook.removeOrder(cancel.getGlobalId())) {
             LOG.warn("Couldn't cancel current {}", cancel);
-            exchangeBus.sendMessage(gatewayId, new Fail(Status.CancelFail, cancel));
+            exchangeBus.sendMessage(gatewayId, new Fail(Status.CancelFail, cancel, cancel.getGlobalId()));
         }
         else {
             LOG.info("Cancelled order {}", cancel);
@@ -102,7 +102,7 @@ public class MatchingEngine extends MessageProcessor {
             LOG.info("Matching successfully finished for {}", order);
         }
         else {
-            orderBook.removeOrder(matched);
+            orderBook.removeOrder(matched.getGlobalId());
             order.setQty(order.getQty().subtract(matched.getQty()));
             matched.setQty(BigDecimal.ZERO);
             // If the order has 0 qty then send it as traded
@@ -168,7 +168,7 @@ public class MatchingEngine extends MessageProcessor {
             if (invalidStatus != null) {
                 if (invalidStatus == Status.OrderFail) LOG.warn("Invalid data in {}", message);
                 else LOG.info("Invalid user input in {}", message);
-                exchangeBus.sendMessage(gatewayId, new Fail(invalidStatus, message));
+                exchangeBus.sendMessage(gatewayId, new Fail(invalidStatus, message, order.getGlobalId()));
             }
             else {
                 // If the order is valid then we process it

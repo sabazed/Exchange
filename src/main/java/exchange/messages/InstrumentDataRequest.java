@@ -4,7 +4,6 @@ public class InstrumentDataRequest implements Message {
 
     private String session;
     private String clientId;
-    private long globalId;
 
     @Override
     public String getSession() {
@@ -22,16 +21,10 @@ public class InstrumentDataRequest implements Message {
     }
 
     @Override
-    public long getGlobalId() {
-        return globalId;
-    }
-
-    @Override
     public String toString() {
         return "InstrumentDataRequest{" +
                 "session='" + session + '\'' +
                 ", clientId='" + clientId + '\'' +
-                ", globalId=" + globalId +
                 '}';
     }
 

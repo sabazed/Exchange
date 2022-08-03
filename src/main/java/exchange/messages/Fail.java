@@ -9,10 +9,10 @@ public class Fail implements Message {
     private long globalId;
     private Status status;
 
-    public Fail(Status status, Message message) {
+    public Fail(Status status, Message message, long globalId) {
         this.status = status;
+        this.globalId = globalId;
         session = message.getSession();
-        globalId = message.getGlobalId();
         clientId = message.getClientId();
     }
 
@@ -39,7 +39,6 @@ public class Fail implements Message {
         return clientId;
     }
 
-    @Override
     public long getGlobalId() {
         return globalId;
     }

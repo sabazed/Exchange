@@ -22,6 +22,4 @@ public interface Message {
 
     String getClientId();
 
-    long getGlobalId();
-
 }

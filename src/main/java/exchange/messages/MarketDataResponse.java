@@ -11,14 +11,12 @@ public class MarketDataResponse implements Message {
     private Instrument instrument;
     private List<MarketDataEntry> updates;
     private String clientId;
-    private long globalId;
 
     public MarketDataResponse(Message message, Instrument instrument, List<MarketDataEntry> updates) {
         this.session = message.getSession();
         this.instrument = instrument;
         this.updates = updates;
         this.clientId = message.getClientId();
-        this.globalId = message.getGlobalId();
     }
 
     public MarketDataResponse(MarketDataResponse original, String session) {
@@ -26,7 +24,6 @@ public class MarketDataResponse implements Message {
         instrument = original.instrument;
         updates = original.updates;
         clientId = original.clientId;
-        globalId = original.globalId;
     }
 
     @Override
@@ -53,17 +50,11 @@ public class MarketDataResponse implements Message {
     }
 
     @Override
-    public long getGlobalId() {
-        return globalId;
-    }
-
-    @Override
     public String toString() {
         return "MarketDataResponse{" +
                 "session='" + session + '\'' +
                 ", updates=" + updates +
                 ", clientId='" + clientId + '\'' +
-                ", globalId=" + globalId +
                 '}';
     }
 

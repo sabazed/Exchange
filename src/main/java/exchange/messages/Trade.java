@@ -6,13 +6,11 @@ public class Trade implements Message {
 
     private String session;
     private String clientId;
-    private long globalId;
     private BigDecimal qty;
 
     public Trade(Order order) {
         session = order.getSession();
         qty = order.getQty();
-        globalId = order.getGlobalId();
         clientId = order.getClientId();
     }
 
@@ -36,16 +34,10 @@ public class Trade implements Message {
     }
 
     @Override
-    public long getGlobalId() {
-        return globalId;
-    }
-
-    @Override
     public String toString() {
         return "Trade{" +
                 "session='" + session + '\'' +
                 ", clientId='" + clientId + '\'' +
-                ", globalId=" + globalId +
                 ", qty=" + qty +
                 '}';
     }
