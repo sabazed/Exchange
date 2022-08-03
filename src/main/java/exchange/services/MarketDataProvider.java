@@ -7,18 +7,22 @@ import exchange.messages.MarketDataResponse;
 import exchange.messages.MarketDataUpdate;
 import exchange.messages.Message;
 import exchange.messages.UnsubscribeRequest;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 
 import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 
 public class MarketDataProvider extends MessageProcessor {
 
+    private static final Logger LOG = LogManager.getLogger(MarketDataProvider.class);
+
     private final Set<MarketDataEntry> marketData;
     private final Set<String> subscribers;
     private final String gatewayId;
 
     public MarketDataProvider(MessageBus messageBus, String gatewayId, String selfId) {
-        super(messageBus, selfId, MarketDataProvider.class);
+        super(messageBus, selfId);
         marketData = ConcurrentHashMap.newKeySet();
         subscribers = ConcurrentHashMap.newKeySet();
         this.gatewayId = gatewayId;
@@ -51,6 +55,11 @@ public class MarketDataProvider extends MessageProcessor {
             LOG.error("Invalid message type received, exiting - {}", message);
             throw new IllegalMessageException(message.toString());
         }
+    }
+
+    @Override
+    protected Logger getLogger() {
+        return LOG;
     }
 
 }

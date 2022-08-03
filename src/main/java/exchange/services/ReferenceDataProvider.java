@@ -8,10 +8,14 @@ import exchange.messages.Message;
 import jakarta.persistence.EntityManager;
 import jakarta.persistence.Persistence;
 import jakarta.persistence.criteria.CriteriaQuery;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 
 import java.util.List;
 
 public class ReferenceDataProvider extends MessageProcessor {
+
+    private static final Logger LOG = LogManager.getLogger(ReferenceDataProvider.class);
 
     // Manager for creating queries
     private final EntityManager manager;
@@ -22,7 +26,7 @@ public class ReferenceDataProvider extends MessageProcessor {
 
 
     public ReferenceDataProvider(MessageBus messageBus, String gatewayId, String selfId) {
-        super(messageBus, selfId, ReferenceDataProvider.class);
+        super(messageBus, selfId);
         this.gatewayId = gatewayId;
         manager = Persistence.createEntityManagerFactory("exchangeUnit").createEntityManager();
         instruments = fetchInstruments();
@@ -47,6 +51,11 @@ public class ReferenceDataProvider extends MessageProcessor {
             LOG.error("Invalid message type received, exiting - {}", message);
             throw new IllegalMessageException(message.toString());
         }
+    }
+
+    @Override
+    protected Logger getLogger() {
+        return LOG;
     }
 
 }

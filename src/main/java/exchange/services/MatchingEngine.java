@@ -13,12 +13,16 @@ import exchange.messages.Message;
 import exchange.messages.Order;
 import exchange.messages.Remove;
 import exchange.messages.Trade;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 
 import java.math.BigDecimal;
 import java.time.Instant;
 import java.util.HashMap;
 
 public class MatchingEngine extends MessageProcessor {
+
+    private static final Logger LOG = LogManager.getLogger(MatchingEngine.class);
 
     // Keep an Order Book for storing all orders
     private final HashMap<Instrument, OrderBook> orderBooks;
@@ -31,7 +35,7 @@ public class MatchingEngine extends MessageProcessor {
 
 
     public MatchingEngine(MessageBus messageBus, String gatewayId, String marketProviderId, String selfId) {
-        super(messageBus, selfId, MatchingEngine.class);
+        super(messageBus, selfId);
         orderBooks = new HashMap<>();
         this.gatewayId = gatewayId;
         this.marketProviderId = marketProviderId;
@@ -172,6 +176,11 @@ public class MatchingEngine extends MessageProcessor {
             LOG.error("Invalid message type received, exiting - {}", message);
             throw new IllegalMessageException(message.toString());
         }
+    }
+
+    @Override
+    protected Logger getLogger() {
+        return LOG;
     }
 
 }

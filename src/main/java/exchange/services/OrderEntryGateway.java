@@ -6,8 +6,12 @@ import exchange.messages.InstrumentDataRequest;
 import exchange.messages.MarketDataRequest;
 import exchange.messages.Message;
 import exchange.messages.Order;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 
 public class OrderEntryGateway extends MessageProcessor {
+
+    private static final Logger LOG = LogManager.getLogger(OrderEntryGateway.class);
 
     private final String endpointId;
     private final String engineId;
@@ -15,7 +19,7 @@ public class OrderEntryGateway extends MessageProcessor {
     private final String marketProviderId;
 
     public OrderEntryGateway(MessageBus messageBus, String engineId, String referenceProviderId, String marketProviderId, String endpointId, String selfId) {
-        super(messageBus, selfId, OrderEntryGateway.class);
+        super(messageBus, selfId);
         this.endpointId = endpointId;
         this.engineId = engineId;
         this.referenceProviderId = referenceProviderId;
@@ -41,6 +45,11 @@ public class OrderEntryGateway extends MessageProcessor {
         else {
             exchangeBus.sendMessage(endpointId + message.getSession(), message);
         }
+    }
+
+    @Override
+    protected Logger getLogger() {
+        return LOG;
     }
 
 }

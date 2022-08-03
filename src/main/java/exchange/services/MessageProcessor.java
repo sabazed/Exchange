@@ -2,15 +2,12 @@ package exchange.services;
 
 import exchange.bus.MessageBus;
 import exchange.messages.Message;
-import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
 import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.LinkedBlockingQueue;
 
 public abstract class MessageProcessor implements MessageBusService {
-
-    protected final Logger LOG;
 
     // Use a LinkedBlockingQueue to receive new orders
     protected final BlockingQueue<Message> messages;
@@ -25,10 +22,9 @@ public abstract class MessageProcessor implements MessageBusService {
     protected volatile boolean running;
 
 
-    public MessageProcessor(MessageBus messageBus, String selfId, Class<?> childClass) {
+    public MessageProcessor(MessageBus messageBus, String selfId) {
         messages = new LinkedBlockingQueue<>();
         exchangeBus = messageBus;
-        LOG = LogManager.getLogger(childClass);
         this.selfId = selfId;
         this.messageProcessor = new Thread(this::processMessages);
         this.running = false;
@@ -52,28 +48,30 @@ public abstract class MessageProcessor implements MessageBusService {
             messages.put(message);
         }
         catch (InterruptedException e) {
-            LOG.error("Thread interrupted, aborting...", e);
+            getLogger().error("Thread interrupted, aborting...", e);
             stop();
         }
     }
 
     private void processMessages() {
-        LOG.info(getClass().getSimpleName() + " up and running!");
+        getLogger().info("{} up and running!", getClass().getSimpleName());
         while (running) {
             try {
                 Message message = messages.take();
-                LOG.info("Processing new {}", message);
+                getLogger().info("Processing new {}", message);
                 // Overridden method for processing the message
                 processMessage(message);
             }
             catch (InterruptedException e) {
-                LOG.error(getClass().getSimpleName() + " interrupted!", e);
+                getLogger().error("{} interrupted!", getClass().getSimpleName(), e);
                 stop();
             }
         }
-        LOG.info(getClass().getSimpleName() + " stopped working...");
+        getLogger().info("{} stopped working...", getClass().getSimpleName());
     }
 
     protected abstract void processMessage(Message message);
+
+    protected abstract Logger getLogger();
 
 }
