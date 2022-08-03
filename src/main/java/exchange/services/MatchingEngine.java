@@ -8,7 +8,7 @@ import exchange.enums.Status;
 import exchange.messages.Cancel;
 import exchange.messages.Fail;
 import exchange.messages.Listing;
-import exchange.messages.MarketDataResponse;
+import exchange.messages.MarketDataUpdate;
 import exchange.messages.Message;
 import exchange.messages.Order;
 import exchange.messages.Remove;
@@ -16,9 +16,7 @@ import exchange.messages.Trade;
 
 import java.math.BigDecimal;
 import java.time.Instant;
-import java.util.Arrays;
 import java.util.HashMap;
-import java.util.List;
 
 public class MatchingEngine extends MessageProcessor {
 
@@ -75,7 +73,7 @@ public class MatchingEngine extends MessageProcessor {
             LOG.warn("Listing message unsuccessful! - {}", order);
             exchangeBus.sendMessage(gatewayId, new Fail(Status.OrderFail, order, order.getGlobalId()));
         }
-        exchangeBus.sendMessage(marketProviderId, new MarketDataResponse(order, order.getInstrument(), getMarketData(order.getInstrument())));
+        exchangeBus.sendMessage(marketProviderId, new MarketDataUpdate(order, getMarketData(order.getInstrument())));
     }
 
     private void cancelOrder(Cancel cancel) {
@@ -89,7 +87,7 @@ public class MatchingEngine extends MessageProcessor {
             LOG.info("Cancelled order {}", cancel);
             exchangeBus.sendMessage(gatewayId, new Remove(cancel));
         }
-        exchangeBus.sendMessage(marketProviderId, new MarketDataResponse(cancel, cancel.getInstrument(), getMarketData(cancel.getInstrument())));
+        exchangeBus.sendMessage(marketProviderId, new MarketDataUpdate(cancel, getMarketData(cancel.getInstrument())));
     }
 
     private boolean matchOrder(Order matched, Order order, OrderBook orderBook) {
@@ -120,7 +118,7 @@ public class MatchingEngine extends MessageProcessor {
         exchangeBus.sendMessage(gatewayId, new Trade(matched));
         LOG.info("Order {} traded - {}", matched.getGlobalId(), matched);
         // Send updated market data
-        exchangeBus.sendMessage(marketProviderId, new MarketDataResponse(order, order.getInstrument(), getMarketData(order.getInstrument(), matched.getInstrument())));
+        exchangeBus.sendMessage(marketProviderId, new MarketDataUpdate(order, getMarketData(matched.getInstrument())));
         return repeatMatching;
     }
 
@@ -141,13 +139,8 @@ public class MatchingEngine extends MessageProcessor {
         }
     }
 
-    private List<MarketDataEntry> getMarketData(Instrument... instruments) {
-        if (instruments.length == 0) {
-            return orderBooks.values().stream().map(OrderBook::getBestPrices).toList();
-        }
-        else {
-            return Arrays.stream(instruments).map(instrument -> orderBooks.get(instrument).getBestPrices()).toList();
-        }
+    private MarketDataEntry getMarketData(Instrument instrument) {
+        return orderBooks.get(instrument).getBestPrices();
     }
 
     @Override
