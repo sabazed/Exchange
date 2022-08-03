@@ -6,6 +6,7 @@ import exchange.messages.MarketDataRequest;
 import exchange.messages.MarketDataResponse;
 import exchange.messages.MarketDataUpdate;
 import exchange.messages.Message;
+import exchange.messages.UnsubscribeRequest;
 
 import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
@@ -13,13 +14,13 @@ import java.util.concurrent.ConcurrentHashMap;
 public class MarketDataProvider extends MessageProcessor {
 
     private final Set<MarketDataEntry> marketData;
-    private final Set<String> endpoints;
+    private final Set<String> subscribers;
     private final String gatewayId;
 
     public MarketDataProvider(MessageBus messageBus, String gatewayId, String selfId) {
         super(messageBus, selfId, MarketDataProvider.class);
         marketData = ConcurrentHashMap.newKeySet();
-        endpoints = ConcurrentHashMap.newKeySet();
+        subscribers = ConcurrentHashMap.newKeySet();
         this.gatewayId = gatewayId;
     }
 
@@ -35,13 +36,16 @@ public class MarketDataProvider extends MessageProcessor {
             marketData.remove(update.getUpdate());
             marketData.add(update.getUpdate());
             // Send the message to every endpoint
-            endpoints.forEach(endpoint -> {
-                exchangeBus.sendMessage(gatewayId, new MarketDataResponse(update, endpoint));
+            subscribers.forEach(id -> {
+                exchangeBus.sendMessage(gatewayId, new MarketDataResponse(update, id));
             });
         }
-        else if (message instanceof MarketDataRequest){
-            endpoints.add(message.getSession());
+        else if (message instanceof MarketDataRequest) {
+            subscribers.add(message.getSession());
             exchangeBus.sendMessage(gatewayId, new MarketDataResponse(message, marketData));
+        }
+        else if (message instanceof UnsubscribeRequest) {
+            subscribers.remove(message.getSession());
         }
         else {
             LOG.error("Invalid message type received, exiting - {}", message);

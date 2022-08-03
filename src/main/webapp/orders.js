@@ -79,7 +79,7 @@ function loadInstruments(instruments) {
             `            <div class=\"market-entry\" id=\"$instrument{instrument.id}\">` +
             `                <p>Instrument ${instrument.id}:` +
             `                    <br>${instrument.name}<br>` +
-            `                    <span id="instrument${instrument.id}-price">Buy: 0<br>Sell: 0<br>Last Trade: 0</span>` +
+            `                    <span id="instrument${instrument.id}-price">Buy: 0<br>Sell: 0<br>Last Trade: None</span>` +
             `                </p>` +
             `            </div>`;
     }
@@ -87,7 +87,10 @@ function loadInstruments(instruments) {
 
 function updateMarketData(entries) {
     for (let entry of entries) {
-        document.getElementById(`instrument${entry.instrument.id}-price`).innerHTML = `Buy: ${entry.buy}<br>Sell: ${entry.sell}<br>Last Trade: ${entry.lastTrade}`;
+        let buy = entry.buy;
+        let sell = entry.sell;
+        let last = entry.lastTrade !== null ? entry.lastTrade : "None";
+        document.getElementById(`instrument${entry.instrument.id}-price`).innerHTML = `Buy: ${buy}<br>Sell: ${sell}<br>Last Trade: ${last}`;
     }
 }
 

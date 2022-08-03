@@ -1,7 +1,6 @@
 package exchange.common;
 
 import exchange.enums.Side;
-import exchange.messages.Message;
 import exchange.messages.Order;
 
 import java.math.BigDecimal;
@@ -25,7 +24,7 @@ public class OrderBook {
         buyOrders = new TreeSet<>(new OrderComparator(true));
         sellOrders = new TreeSet<>(new OrderComparator(false));
         orderMap = new HashMap<>();
-        lastTrade = BigDecimal.ZERO;
+        lastTrade = null;
     }
 
     public boolean removeOrder(long globalId) {
