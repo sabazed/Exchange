@@ -7,7 +7,7 @@ public class UnsubscribeRequest implements Message {
 
     public UnsubscribeRequest(String session) {
         this.session = session;
-        this.clientId = "-1";
+        this.clientId = null;
     }
 
     @Override
