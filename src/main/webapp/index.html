@@ -13,22 +13,17 @@
     <div class="notif" id="overlay" onclick="fadeElem(this.id)">
         <span id="notiftext">An error occurred, please try again later</span>
     </div>
-<!--    <div class="overlay" id="login" style="display: block">-->
-<!--        <div id="logintext">-->
-<!--            <label for="username">Enter username:</label>-->
-<!--            <input id="username">-->
-<!--            <button type="submit" id="loginbtn" onclick="login()">LOG IN</button>-->
-<!--        </div>-->
-<!--    </div>-->
+    <div id="user" style="display: block">
+        <div id="logintext">
+            <p><span>Username:</span><br><span id="username">ODHSADIaaaaaaaaaaaaaaaaaaaaaaaaaaaaa</span></p>
+        </div>
+    </div>
     <div class="order">
         <form id="order-form" action="#" method="post">
             <fieldset class="section">
                 <h3>Enter order details below:</h3>
                 <p id="invalid-data"></p>
                 <div class="input">
-                    <label for="user" class="order-text-label">Username:</label>
-                    <input id="user" class="order-text" required>
-                    <br>
                     <label for="instrument" class="order-text-label">Instrument:</label>
                     <select id="instrument" class="order-text" required></select>
                     <br>
@@ -50,7 +45,15 @@
     </div>
     <div class="market-data">
         <fieldset class="market-field" id="market-field">
-
+            <table id="market-table">
+                <tr>
+                    <th class="col-name">ID</th>
+                    <th class="col-name" id="name-col">Name</th>
+                    <th class="col-name">Buy</th>
+                    <th class="col-name">Sell</th>
+                    <th class="col-name">Last Trade</th>
+                </tr>
+            </table>
         </fieldset>
     </div>
     <div class="order-book">

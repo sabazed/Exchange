@@ -1,9 +1,12 @@
 let orders = {};
 let order_id = 0;
 let request_id = 0;
-let loaded = false;
-let wsocket = new WebSocket("ws://localhost:8080/Exchange/order");
+
+let username = generateUsername();
+document.getElementById("username").innerText = username;
 fadeElem("overlay"); // Hide the notification
+
+let wsocket = new WebSocket("ws://localhost:8080/Exchange/order");
 
 wsocket.onmessage = function (evt) {
     console.log(evt.data);
@@ -53,44 +56,27 @@ wsocket.onopen = function (evt) {
     wsocket.send(JSON.stringify(json));
 }
 
-// function login() {
-//     let user = document.getElementById("username").value;
-//     if (orders.hasOwnProperty(user.toString())) {
-//         loadOrders(user);
-//     }
-//     else {
-//         orders[user] = {};
-//     }
-//     document.getElementById("username").value = user;
-// }
-//
-// function loadOrders(user) {
-//     for (let order in orders[user]) {
-//         addOrder(order);
-//     }
-// }
-
 function loadInstruments(instruments) {
     let instrumentSelect = document.getElementById("instrument");
-    let marketData = document.getElementById("market-field");
+    let marketData = document.getElementById("market-table");
     for (let instrument of instruments) {
         instrumentSelect.innerHTML += `<option value=${instrument.id}>${instrument.name}</option>`;
         marketData.innerHTML +=
-            `            <div class=\"market-entry\" id=\"$instrument{instrument.id}\">` +
-            `                <p>Instrument ${instrument.id}:` +
-            `                    <br>${instrument.name}<br>` +
-            `                    <span id="instrument${instrument.id}-price">Buy: 0<br>Sell: 0<br>Last Trade: None</span>` +
-            `                </p>` +
-            `            </div>`;
+            `            <tr id="instrument${instrument.id}">` +
+            `                <td class="market-row">${instrument.id}</td>` +
+            `                <td class="market-row">${instrument.name}</td>` +
+            `                <td class="market-row" id="instrumentBuy${instrument.id}">0</td>` +
+            `                <td class="market-row" id="instrumentSell${instrument.id}">0</td>` +
+            `                <td class="market-row" id="instrumentLast${instrument.id}">None</td>` +
+            `            </tr>`;
     }
 }
 
 function updateMarketData(entries) {
     for (let entry of entries) {
-        let buy = entry.buy;
-        let sell = entry.sell;
-        let last = entry.lastTrade !== null ? entry.lastTrade : "None";
-        document.getElementById(`instrument${entry.instrument.id}-price`).innerHTML = `Buy: ${buy}<br>Sell: ${sell}<br>Last Trade: ${last}`;
+        document.getElementById(`instrumentBuy${entry.instrument.id}`).innerText = entry.buy;
+        document.getElementById(`instrumentSell${entry.instrument.id}`).innerText = entry.sell;
+        document.getElementById(`instrumentLast${entry.instrument.id}`).innerText = entry.lastTrade !== null ? entry.lastTrade : "None";
     }
 }
 
@@ -98,7 +84,7 @@ function sendOrder() {
     event.preventDefault();
     let json = {};
     json.type = "Order";
-    json.user = document.getElementById("user").value.trim();
+    json.user = username;
     json.side = document.getElementById("side").value;
     json.price = document.getElementById("price").value.trim();
     json.qty = document.getElementById("qty").value.trim();
@@ -131,8 +117,8 @@ function addOrder(order) {
     let color = order.side === "BUY" ? "green" : "red";
     let newdiv =
         `                <div class=\"entry\" id="order${order.clientId}">\n` +
-        `                    <button type=\"submit\" class=\"cancel\" id=\"order${order.user}-${order.clientId}" onclick="sendRemove(this.id)">x</button>\n` +
-        `                    <span style=\"color: ${color}\">${order.side} Order </span><span>${order.clientId} - Instrument: ${order.instrument.name}, User: ${order.user}<br>Price: ${order.price}$, Quantity: ${order.qty}</span>\n` +
+        `                    <button type=\"submit\" class=\"cancel\" id=\"orderInfo-${order.clientId}" onclick="sendRemove(this.id)">x</button>\n` +
+        `                    <span style=\"color: ${color}\">${order.side} Order </span><span>${order.clientId} - Instrument: ${order.instrument.name}<br>Price: ${order.price}$, Quantity: ${order.qty}</span>\n` +
         "                </div>";
     document.getElementById("book-field").innerHTML += newdiv;
     listNotif(order.clientId);
@@ -149,9 +135,10 @@ function tradeOrder(trade) {
     if (order.qty > 0) {
         let color = order.side === "BUY" ? "green" : "red";
         document.getElementById(`order${order.clientId}`).innerHTML =
-            `                    <button type=\"submit\" class=\"cancel\" id=\"${order.user}-${order.clientId}" onclick="sendRemove(this.id)">x</button>\n` +
-            `                    <span style=\"color: ${color}\">${order.side} Order </span><span>${order.clientId} - Instrument: ${order.instrument.name}, User: ${order.user}<br> Price: ${order.price}$, Quantity: ${order.qty}</span>\n`;
-    } else {
+            `                    <button type=\"submit\" class=\"cancel\" id=\"orderInfo-${order.clientId}" onclick="sendRemove(this.id)">x</button>\n` +
+            `                    <span style=\"color: ${color}\">${order.side} Order </span><span>${order.clientId} - Instrument: ${order.instrument.name}<br> Price: ${order.price}$, Quantity: ${order.qty}</span>\n`;
+    }
+    else {
         removeOrder(order.clientId);
     }
     tradeNotif(order.clientId);
@@ -209,3 +196,9 @@ function showError(error) {
 function fadeElem(id) {
     document.getElementById(id).classList.add("invisible");
 }
+
+function generateUsername() {
+     return ([1e7]+-1e3+-4e3+-8e3+-1e11).replace(/[018]/g, c =>
+         (c ^ crypto.getRandomValues(new Uint8Array(1))[0] & 15 >> c / 4).toString(16)
+     );
+ }
