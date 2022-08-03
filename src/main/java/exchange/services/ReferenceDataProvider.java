@@ -22,18 +22,22 @@ public class ReferenceDataProvider extends MessageProcessor {
     // Instruments to load
     private final List<Instrument> instruments;
     // Gateway ID and Engine ID
-    private final String gatewayId;
+    private String gatewayId;
 
 
-    public ReferenceDataProvider(MessageBus messageBus, String gatewayId, String selfId) {
-        super(messageBus, selfId);
-        this.gatewayId = gatewayId;
+    public ReferenceDataProvider(MessageBus messageBus) {
+        super(messageBus);
         manager = Persistence.createEntityManagerFactory("exchangeUnit").createEntityManager();
         instruments = fetchInstruments();
     }
 
+    @Override
     public String getSelfId() {
         return selfId;
+    }
+
+    public void setGatewayId(String gatewayId) {
+        this.gatewayId = gatewayId;
     }
 
     private List<Instrument> fetchInstruments() {

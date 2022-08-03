@@ -27,23 +27,29 @@ public class MatchingEngine extends MessageProcessor {
     // Keep an Order Book for storing all orders
     private final HashMap<Instrument, OrderBook> orderBooks;
     // OrderEntryGateway and MarketDataProvider ID for bus
-    private final String gatewayId;
-    private final String marketProviderId;
+    private String gatewayId;
+    private String marketProviderId;
 
     // Keep count of orders to give them unique IDs
     private static long ID = 0;
 
 
-    public MatchingEngine(MessageBus messageBus, String gatewayId, String marketProviderId, String selfId) {
-        super(messageBus, selfId);
+    public MatchingEngine(MessageBus messageBus) {
+        super(messageBus);
         orderBooks = new HashMap<>();
-        this.gatewayId = gatewayId;
-        this.marketProviderId = marketProviderId;
     }
 
     @Override
     public String getSelfId() {
         return selfId;
+    }
+
+    public void setGatewayId(String gatewayId) {
+        this.gatewayId = gatewayId;
+    }
+
+    public void setMarketProviderId(String marketProviderId) {
+        this.marketProviderId = marketProviderId;
     }
 
     private void registerOrder(Order order) {

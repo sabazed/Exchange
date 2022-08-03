@@ -5,19 +5,35 @@
   "services": [
     {
       "name": "exchange.services.OrderEntryGateway",
-      "params": ["Engine", "ReferenceProvider", "MarketProvider", "ServerEndpoint_", "Gateway"]
+      "params": [
+        {"paramName": "EngineId",             "paramValue": "Engine",             "paramClass": "java.lang.String"},
+        {"paramName": "ReferenceProviderId",  "paramValue": "ReferenceProvider",  "paramClass": "java.lang.String"},
+        {"paramName": "MarketProviderId",     "paramValue": "MarketProvider",     "paramClass": "java.lang.String"},
+        {"paramName": "EndpointId",           "paramValue": "ServerEndpoint_",    "paramClass": "java.lang.String"},
+        {"paramName": "SelfId",               "paramValue": "Gateway",            "paramClass": "java.lang.String"}
+      ]
     },
     {
       "name": "exchange.services.MatchingEngine",
-      "params": ["Gateway", "MarketProvider", "Engine"]
+      "params": [
+        {"paramName": "GatewayId",            "paramValue": "Gateway",            "paramClass": "java.lang.String"},
+        {"paramName": "MarketProviderId",     "paramValue": "MarketProvider",     "paramClass": "java.lang.String"},
+        {"paramName": "SelfId",               "paramValue": "Engine",             "paramClass": "java.lang.String"}
+      ]
     },
     {
       "name": "exchange.services.MarketDataProvider",
-      "params": ["Gateway", "MarketProvider"]
+      "params": [
+        {"paramName": "GatewayId",            "paramValue": "Gateway",            "paramClass": "java.lang.String"},
+        {"paramName": "SelfId",               "paramValue": "MarketProvider",     "paramClass": "java.lang.String"}
+      ]
     },
     {
       "name": "exchange.services.ReferenceDataProvider",
-      "params": ["Gateway", "ReferenceProvider"]
+      "params": [
+        {"paramName": "GatewayId",            "paramValue": "Gateway",            "paramClass": "java.lang.String"},
+        {"paramName": "SelfId",               "paramValue": "ReferenceProvider",  "paramClass": "java.lang.String"}
+      ]
     }
   ]
 }

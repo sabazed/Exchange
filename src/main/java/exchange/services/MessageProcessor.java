@@ -14,7 +14,7 @@ public abstract class MessageProcessor implements MessageBusService {
     // Response bus to send responses for frontend
     protected final MessageBus exchangeBus;
     // Service ID for this instance
-    protected final String selfId;
+    protected String selfId;
 
     // Thread which will process messages
     private final Thread messageProcessor;
@@ -22,10 +22,9 @@ public abstract class MessageProcessor implements MessageBusService {
     protected volatile boolean running;
 
 
-    public MessageProcessor(MessageBus messageBus, String selfId) {
+    public MessageProcessor(MessageBus messageBus) {
         messages = new LinkedBlockingQueue<>();
         exchangeBus = messageBus;
-        this.selfId = selfId;
         this.messageProcessor = new Thread(this::processMessages);
         this.running = false;
     }
@@ -41,6 +40,10 @@ public abstract class MessageProcessor implements MessageBusService {
 
     public String getSelfId() {
         return selfId;
+    }
+
+    public void setSelfId(String selfId) {
+        this.selfId = selfId;
     }
 
     public void issueMessage(Message message) {

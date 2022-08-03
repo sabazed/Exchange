@@ -19,18 +19,21 @@ public class MarketDataProvider extends MessageProcessor {
 
     private final Set<MarketDataEntry> marketData;
     private final Set<String> subscribers;
-    private final String gatewayId;
+    private String gatewayId;
 
-    public MarketDataProvider(MessageBus messageBus, String gatewayId, String selfId) {
-        super(messageBus, selfId);
+    public MarketDataProvider(MessageBus messageBus) {
+        super(messageBus);
         marketData = ConcurrentHashMap.newKeySet();
         subscribers = ConcurrentHashMap.newKeySet();
-        this.gatewayId = gatewayId;
     }
 
     @Override
     public String getSelfId() {
         return selfId;
+    }
+
+    public void setGatewayId(String gatewayId) {
+        this.gatewayId = gatewayId;
     }
 
     @Override

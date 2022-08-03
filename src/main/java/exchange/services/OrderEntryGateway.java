@@ -13,21 +13,33 @@ public class OrderEntryGateway extends MessageProcessor {
 
     private static final Logger LOG = LogManager.getLogger(OrderEntryGateway.class);
 
-    private final String endpointId;
-    private final String engineId;
-    private final String referenceProviderId;
-    private final String marketProviderId;
+    private String endpointId;
+    private String engineId;
+    private String referenceProviderId;
+    private String marketProviderId;
 
-    public OrderEntryGateway(MessageBus messageBus, String engineId, String referenceProviderId, String marketProviderId, String endpointId, String selfId) {
-        super(messageBus, selfId);
-        this.endpointId = endpointId;
-        this.engineId = engineId;
-        this.referenceProviderId = referenceProviderId;
-        this.marketProviderId = marketProviderId;
+    public OrderEntryGateway(MessageBus messageBus) {
+        super(messageBus);
     }
 
     public String getSelfId() {
         return selfId;
+    }
+
+    public void setEndpointId(String endpointId) {
+        this.endpointId = endpointId;
+    }
+
+    public void setEngineId(String engineId) {
+        this.engineId = engineId;
+    }
+
+    public void setReferenceProviderId(String referenceProviderId) {
+        this.referenceProviderId = referenceProviderId;
+    }
+
+    public void setMarketProviderId(String marketProviderId) {
+        this.marketProviderId = marketProviderId;
     }
 
     @Override

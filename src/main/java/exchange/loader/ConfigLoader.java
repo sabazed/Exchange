@@ -8,6 +8,7 @@ import org.apache.logging.log4j.Logger;
 
 import java.io.IOException;
 import java.lang.reflect.Constructor;
+import java.lang.reflect.Method;
 import java.util.List;
 import java.util.stream.Collectors;
 
@@ -53,13 +54,16 @@ public class ConfigLoader {
     }
 
     public List<MessageProcessor> getServices(MessageBus messageBus) {
-        return classConfig.getServices().stream().map(serviceDecorator -> {
+        return classConfig.getServices().stream().map(decorator -> {
             try {
-                Class<?> cls = Class.forName(serviceDecorator.getName());
-                serviceDecorator.getParams().add(0, messageBus);
-                serviceDecorator.getClasses().add(0, MessageBus.class);
-                Constructor<?> constr = cls.getConstructor(serviceDecorator.getClasses().toArray(new Class[0]));
-                return (MessageProcessor) constr.newInstance(serviceDecorator.getParams().toArray(new Object[0]));
+                Class<?> cls = Class.forName(decorator.getName());
+                Constructor<?> constr = cls.getConstructor(MessageBus.class);
+                MessageProcessor processor = (MessageProcessor) constr.newInstance(messageBus);
+                for (String key : decorator.getKeys()) {
+                    Method setter = processor.getClass().getMethod("set" + key, decorator.getParamClass(key));
+                    setter.invoke(processor, decorator.getParam(key));
+                }
+                return processor;
             }
             catch (ReflectiveOperationException e) {
                 LOG.error("Couldn't create class instance", e);
