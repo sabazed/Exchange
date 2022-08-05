@@ -4,6 +4,7 @@ import exchange.bus.MessageBus;
 import exchange.messages.Cancel;
 import exchange.messages.InstrumentDataRequest;
 import exchange.messages.MarketDataRequest;
+import exchange.messages.MarketDataUnsubscribe;
 import exchange.messages.Message;
 import exchange.messages.Order;
 import org.apache.logging.log4j.LogManager;
@@ -51,7 +52,7 @@ public class OrderEntryGateway extends MessageProcessor {
         else if (message instanceof InstrumentDataRequest) {
             exchangeBus.sendMessage(referenceProviderId, message);
         }
-        else if (message instanceof MarketDataRequest) {
+        else if (message instanceof MarketDataRequest || message instanceof MarketDataUnsubscribe) {
             exchangeBus.sendMessage(marketProviderId, message);
         }
         else {

@@ -5,8 +5,9 @@ import exchange.bus.ExchangeBus;
 import exchange.bus.MessageBus;
 import exchange.enums.Status;
 import exchange.messages.Fail;
+import exchange.messages.MarketDataResponse;
+import exchange.messages.MarketDataUnsubscribe;
 import exchange.messages.Message;
-import exchange.messages.UnsubscribeRequest;
 import exchange.services.MessageBusService;
 import jakarta.servlet.ServletContext;
 import jakarta.websocket.CloseReason;
@@ -28,6 +29,8 @@ public class ExchangeEndpoint extends Endpoint implements MessageBusService {
     private ExchangeBus exchangeBus;
     // Session of the current endpoint
     private Session session;
+    // Subscription for MarketDataProvider
+    private boolean subscribed;
     // Service IDs
     private String selfId;
     private String gatewayId;
@@ -36,6 +39,7 @@ public class ExchangeEndpoint extends Endpoint implements MessageBusService {
     public void issueMessage(Message message) {
         try {
             session.getBasicRemote().sendObject(message);
+            if (message instanceof MarketDataResponse) subscribed = true;
             LOG.info("Sent session {} the message - {}", session.getId(), message);
         } catch (IOException | EncodeException e) {
             LOG.error("Could not send session {} object {}!", session.getId(), message, e);
@@ -73,7 +77,10 @@ public class ExchangeEndpoint extends Endpoint implements MessageBusService {
     @Override
     public void onClose(Session session, CloseReason closeReason) {
         LOG.info("Client disconnected with session {}", session.getId());
-        exchangeBus.sendMessage(gatewayId, new UnsubscribeRequest(session.getId()));
+        if (subscribed) {
+            exchangeBus.sendMessage(gatewayId, new MarketDataUnsubscribe(session.getId()));
+            subscribed = false;
+        }
         exchangeBus.unregisterService(selfId + session.getId());
     }
 

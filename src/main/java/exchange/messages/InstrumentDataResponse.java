@@ -37,7 +37,7 @@ public class InstrumentDataResponse implements Message {
 
     @Override
     public String toString() {
-        return "Response{" +
+        return "InstrumentDataResponse{" +
                 "session='" + session + '\'' +
                 ", data=" + instruments +
                 ", clientId='" + clientId + '\'' +

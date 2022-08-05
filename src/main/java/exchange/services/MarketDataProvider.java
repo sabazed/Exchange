@@ -4,9 +4,9 @@ import exchange.bus.MessageBus;
 import exchange.common.MarketDataEntry;
 import exchange.messages.MarketDataRequest;
 import exchange.messages.MarketDataResponse;
+import exchange.messages.MarketDataUnsubscribe;
 import exchange.messages.MarketDataUpdate;
 import exchange.messages.Message;
-import exchange.messages.UnsubscribeRequest;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
@@ -51,7 +51,7 @@ public class MarketDataProvider extends MessageProcessor {
             subscribers.add(message.getSession());
             exchangeBus.sendMessage(gatewayId, new MarketDataResponse(message, marketData));
         }
-        else if (message instanceof UnsubscribeRequest) {
+        else if (message instanceof MarketDataUnsubscribe) {
             subscribers.remove(message.getSession());
         }
         else {

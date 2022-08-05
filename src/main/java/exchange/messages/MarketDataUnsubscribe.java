@@ -1,11 +1,11 @@
 package exchange.messages;
 
-public class UnsubscribeRequest implements Message {
+public class MarketDataUnsubscribe implements Message {
 
     private String session;
     private String clientId;
 
-    public UnsubscribeRequest(String session) {
+    public MarketDataUnsubscribe(String session) {
         this.session = session;
         this.clientId = null;
     }
@@ -27,7 +27,7 @@ public class UnsubscribeRequest implements Message {
 
     @Override
     public String toString() {
-        return "UnsubscribeRequest{" +
+        return "MarketDataUnsubscribe{" +
                 "session='" + session + '\'' +
                 ", clientId='" + clientId + '\'' +
                 '}';
