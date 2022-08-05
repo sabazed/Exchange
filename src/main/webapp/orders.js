@@ -58,7 +58,8 @@ wsocket.onopen = function (evt) {
 
 function loadInstruments(instruments) {
     let instrumentSelect = document.getElementById("instrument");
-    let marketData = document.getElementById("market-table");
+    let marketData = document.getElementById("market-table-body");
+    marketData.innerHTML = "";
     for (let instrument of instruments) {
         instrumentSelect.innerHTML += `<option value=${instrument.id}>${instrument.name}</option>`;
         marketData.innerHTML +=
@@ -67,7 +68,7 @@ function loadInstruments(instruments) {
             `                <td class="market-row">${instrument.name}</td>` +
             `                <td class="market-row" id="instrumentBuy${instrument.id}">0</td>` +
             `                <td class="market-row" id="instrumentSell${instrument.id}">0</td>` +
-            `                <td class="market-row" id="instrumentLast${instrument.id}">None</td>` +
+            `                <td class="market-row" id="instrumentLast${instrument.id}"></td>` +
             `            </tr>`;
     }
 }
@@ -76,7 +77,7 @@ function updateMarketData(entries) {
     for (let entry of entries) {
         document.getElementById(`instrumentBuy${entry.instrument.id}`).innerText = entry.buy;
         document.getElementById(`instrumentSell${entry.instrument.id}`).innerText = entry.sell;
-        document.getElementById(`instrumentLast${entry.instrument.id}`).innerText = entry.lastTrade !== null ? entry.lastTrade : "None";
+        document.getElementById(`instrumentLast${entry.instrument.id}`).innerText = entry.lastTrade !== null ? entry.lastTrade : "";
     }
 }
 

@@ -200,7 +200,7 @@ select {
     table-layout: fixed;
 }
 
-.col-name {
+#market-table-head {
     background: #555555;
     overflow:hidden;
     text-overflow: ellipsis;

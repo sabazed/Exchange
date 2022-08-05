@@ -15,7 +15,7 @@
     </div>
     <div id="user" style="display: block">
         <div id="logintext">
-            <p><span>Username:</span><br><span id="username">ODHSADIaaaaaaaaaaaaaaaaaaaaaaaaaaaaa</span></p>
+            <p>Username:<br><span id="username"></span></p>
         </div>
     </div>
     <div class="order">
@@ -46,13 +46,18 @@
     <div class="market-data">
         <fieldset class="market-field" id="market-field">
             <table id="market-table">
-                <tr>
-                    <th class="col-name">ID</th>
-                    <th class="col-name" id="name-col">Name</th>
-                    <th class="col-name">Buy</th>
-                    <th class="col-name">Sell</th>
-                    <th class="col-name">Last Trade</th>
-                </tr>
+                <thead id="market-table-head">
+                    <tr>
+                        <th>ID</th>
+                        <th id="name-col">Name</th>
+                        <th>Buy</th>
+                        <th>Sell</th>
+                        <th>Last Trade</th>
+                    </tr>
+                </thead>
+                <tbody id="market-table-body">
+
+                </tbody>
             </table>
         </fieldset>
     </div>
