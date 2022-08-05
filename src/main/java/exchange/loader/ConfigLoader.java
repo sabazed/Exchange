@@ -59,9 +59,9 @@ public class ConfigLoader {
                 Class<?> cls = Class.forName(decorator.getName());
                 Constructor<?> constr = cls.getConstructor(MessageBus.class);
                 MessageProcessor processor = (MessageProcessor) constr.newInstance(messageBus);
-                for (String key : decorator.getKeys()) {
+                for (String key : decorator.getParamNames()) {
                     Method setter = processor.getClass().getMethod("set" + key, decorator.getParamClass(key));
-                    setter.invoke(processor, decorator.getParam(key));
+                    setter.invoke(processor, decorator.getParamValue(key));
                 }
                 return processor;
             }
