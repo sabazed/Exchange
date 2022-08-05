@@ -1,5 +1,6 @@
 CREATE TABLE Instrument
 (
-    id SERIAL PRIMARY KEY,
-    name text
+    id integer NOT NULL,
+    name text,
+    PRIMARY KEY (id)
 );
